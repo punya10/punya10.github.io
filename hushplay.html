@@ -1,0 +1,91 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>AssPlay</title>
+
+</head>
+
+<body>
+  <meter id="volumeMeter" high="1" max="1" value="0"></meter><br/>
+  <meter id="f1" high="1" max="255" value="0"></meter><br/>
+  <meter id="f2" high="1" max="255" value="0"></meter><br/>
+  <meter id="f3" high="1" max="255" value="0"></meter><br/>
+  <meter id="f4" high="1" max="255" value="0"></meter><br/>
+  <meter id="f5" high="1" max="255" value="0"></meter><br/>
+  <meter id="f6" high="1" max="255" value="0"></meter><br/>
+  <meter id="f7" high="1" max="255" value="0"></meter><br/>
+  <meter id="f8" high="1" max="255" value="0"></meter><br/>
+  <meter id="f9" high="1" max="255" value="0"></meter><br/>
+  <meter id="f10" high="1" max="255" value="0"></meter><br/>
+  <meter id="f11" high="1" max="255" value="0"></meter><br/>
+  <meter id="f12" high="1" max="255" value="0"></meter><br/>
+  <meter id="f13" high="1" max="255" value="0"></meter><br/>
+  <meter id="f14" high="1" max="255" value="0"></meter><br/>
+  <meter id="f15" high="1" max="255" value="0"></meter><br/>
+  <meter id="f16" high="1" max="255" value="0"></meter><br/>
+
+  <canvas width="160" height="90"></canvas>
+
+  <script>
+    
+    const volumeMeterEl = document.querySelector("meter");
+
+    const history = 10;
+    const avg = 0.5;
+
+    function update_avg(curr) {
+      avg -= avg / history;
+      avg += curr / history;
+      return avg;
+    }
+
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const analyserNode = audioContext.createAnalyser();
+    analyserNode.fftSize = 32;
+    const bufferLength = analyserNode.frequencyBinCount;
+
+    var stream, mediaStreamAudioSourceNode;
+    async function init() {
+    stream = await navigator.mediaDevices.getUserMedia({audio: true});
+    mediaStreamAudioSourceNode = audioContext.createMediaStreamSource(stream);
+    mediaStreamAudioSourceNode.connect(analyserNode);
+
+    }
+    init();
+
+    const pcmData = new Float32Array(analyserNode.fftSize);
+    const dataArray = new Uint8Array(bufferLength);
+
+    console.log("fft size",analyserNode.fftSize);
+    console.log("fft bins",bufferLength);
+    
+    var meters = [...document.querySelectorAll("meter")];
+    meters.shift();
+    //console.log(meters)
+
+    const onFrame = () => {
+      analyserNode.getFloatTimeDomainData(pcmData);
+      analyserNode.getByteFrequencyData(dataArray);
+      //console.log(dataArray);
+      meters.forEach(m => m.value = dataArray[meters.indexOf(m)])
+      let sumSquares = 0.0;
+      for (const amplitude of pcmData) {
+        sumSquares += amplitude * amplitude;
+      }
+      volumeMeterEl.value = Math.sqrt(sumSquares / pcmData.length);
+
+      //avg = update_avg(Math.sqrt(sumSquares / pcmData.length));
+      //volumeMeterEl.value = avg;
+      window.requestAnimationFrame(onFrame);
+    };
+    window.requestAnimationFrame(onFrame);
+    
+  </script>
+</body>
+
+</html>
