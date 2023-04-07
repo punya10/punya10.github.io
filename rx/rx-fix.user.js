@@ -99,7 +99,7 @@ function addcss(css) {
 
 
 (function() {
-    var scale = (window.innerWidth - 95 - 60)/840;
+    var scale = (window.innerWidth - 120 - 60)/840;
   addcss(`.card-content { transform: scale(${scale}); }`);
 
   var img = document.getElementById("AMBOSS") || document.createElement("img");
