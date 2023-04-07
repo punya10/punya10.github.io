@@ -5,12 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>HTML 5 Boilerplate</title>
-    <link rel="stylesheet" href="style.css">
+    <!--<link rel="stylesheet" href="style.css">-->
+    <style>
+		
+		
+		.float{
+	position:fixed;
+	width:60px;
+	height:60px;
+	bottom:40px;
+	left:40px;
+	background-color:#0C9;
+	color:#FFF;
+	border-radius:50px;
+	text-align:center;
+	box-shadow: 2px 2px 3px #999;
+}
+
+.my-float {
+	margin-top:22px;
+}
+		
+		#rx {
+			position:fixed;
+			top:0;
+			left:0;
+			bottom:0;
+			right:0;
+			width:100%;
+			height:100%;
+			border:none;
+			margin:0;
+			padding:0;
+			overflow:hidden;
+		}
+	  </style>
   </head>
   <body>
-  <iframe src="https://usmle-rx.scholarrx.com/first-aid" style="position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;">
+  <iframe id="rx" src="https://usmle-rx.scholarrx.com/first-aid">
     Your browser doesn't support iframes
 </iframe>
-	<script src="index.js"></script>
+	  <a href="#" class="float" onclick="myFunction()">
+<i class="fa fa-plus my-float"></i>
+</a>
+	<script>
+		function myFunction() {
+			alert(document.querySelector("#rx").contentWindow.location.href)	
+		}
+	</script>
   </body>
 </html>
