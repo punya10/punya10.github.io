@@ -152,7 +152,7 @@ dialog::backdrop {
   waitForElm('.card-content').then((elm) => {
     console.log('Element is ready');
     console.log(elm.textContent);
-    var scale = (window.innerWidth - 140 - 60)/elm.outerWidth();
+    var scale = (window.innerWidth - 140 - 60)/elm.outerWidth;
     alert(scale);
     myCss.innerText += `.card-content { transform: scale(${scale}); }`;   
   });
