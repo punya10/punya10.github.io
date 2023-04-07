@@ -154,12 +154,37 @@ dialog::backdrop {
 }
 `;
 
+// Call the below function
+//waitForElementToDisplay("#div1",function(){alert("Hi");},1000,9000);
 
+function waitForElementToDisplay(selector, callback, checkFrequencyInMs, timeoutInMs) {
+  var startTimeInMs = Date.now();
+  (function loopSearch() {
+    if (document.querySelector(selector) != null) {
+      callback();
+      return;
+    }#
+    else {
+      setTimeout(function () {
+        if (timeoutInMs && Date.now() - startTimeInMs > timeoutInMs)
+          return;
+        loopSearch();
+      }, checkFrequencyInMs);
+    }
+  })();
+}
+//<mat-sidenav-container _ngcontent-ajq-c383="" fullscreen="" class="mat-drawer-container mat-sidenav-container ng-tns-c383-0 mat-drawer-transition">
 (function() {
 
-  var myCss = addcss(myStyle);
-  respondToVisibility(elm, () => alert("Responding normally"))
-  waitForElm('.card-content').then((elm) => (alert("wait"), respondToVisibility(elm, () => alert("Responding in wait"))));
+  var outer = document.querySelector("mat-sidenav-container");
+  var inner = document.querySelector("mat-sidenav-content");
+  alert(JSON.stringify({oow:outer.outerWidth, oiw: outer.innerWidth, iow: inner.outerWidth, iiw: inner.innerWidth})); 
+	//var scale = (window.innerWidth - 140 - 60)/elm.innerWidth;
+  //  alert(scale);
+  //  myCss.innerText += `.card-content { transform: scale(${scale}); }`;
+  //var myCss = addcss(myStyle);
+  //respondToVisibility(elm, () => alert("Responding normally"))
+  //waitForElm('.card-content').then((elm) => (alert("wait"), respondToVisibility(elm, () => alert("Responding in wait"))));
   
   /*
   waitForElm('.card-content').then((elm) => {
