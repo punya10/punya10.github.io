@@ -113,7 +113,7 @@ function addcss(css) {
       const id = `${window.location.href.match(/play-deck\/\d+/)}`.replace(/[^\d]/g, '');
       getCards(id).then(url => {
           console.log(url);
-          window.open(url, '_blank');
+          window.open(url);
       });
   });
 })();
