@@ -91,7 +91,8 @@ async function waitForElm(selector) {
             return resolve(document.querySelector(selector));
         }
 
-        const observer = new MutationObserver(mutations => {
+		setTimeout(() => waitForElm(selector), 1000);
+        /*const observer = new MutationObserver(mutations => {
             if (document.querySelector(selector)) {
                 resolve(document.querySelector(selector));
                 observer.disconnect();
@@ -101,7 +102,7 @@ async function waitForElm(selector) {
         observer.observe(document.body, {
             childList: true,
             subtree: true
-        });
+        });*/
     });
 }
 
@@ -152,7 +153,7 @@ dialog::backdrop {
   waitForElm('.card-content').then((elm) => {
     console.log('Element is ready');
     console.log(elm.textContent);
-    var scale = (window.innerWidth - 140 - 60)/elm.outerWidth;
+    var scale = (window.innerWidth - 140 - 60)/elm.innerWidth;
     alert(scale);
     myCss.innerText += `.card-content { transform: scale(${scale}); }`;   
   });
