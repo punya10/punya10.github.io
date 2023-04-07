@@ -158,8 +158,8 @@ dialog::backdrop {
 (function() {
 
   var myCss = addcss(myStyle);
-  
-  waitForElm('.card-content').then((elm) => (alert("wait"), respondToVisibility(elm, () => alert("Responding"))));
+  respondToVisibility(elm, () => alert("Responding normally"))
+  waitForElm('.card-content').then((elm) => (alert("wait"), respondToVisibility(elm, () => alert("Responding in wait"))));
   
   /*
   waitForElm('.card-content').then((elm) => {
