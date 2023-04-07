@@ -5,6 +5,7 @@
 // @version     0.1
 // @author      Punya Jain
 // @description USMLE-Rx to Amboss questions finder
+// @downloadURL https://github.com/punya10/punya10.github.io/raw/master/rx/rx-fix.user.js
 // ==/UserScript==
 
 async function getAmbossQuestions(notes, title = "PJ Deck") {
