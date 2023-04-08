@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        rx-fix
-// @match       *://usmle-rx.scholarrx.com/*
+// @match       *usmle-rx.scholarrx.com*
 // @grant       none
 // @version     0.1
 // @author      Punya Jain
@@ -24,30 +24,30 @@ async function getAmbossQuestions(notes, title = "PJ Deck") {
     popup("Found " + qids.length + " amboss questions: " + JSON.stringify(qids), 1000);
 
     if (qids.length > 0) {
-    const eidData = await fetch('https://corsproxy.io/?' + encodeURIComponent("https://content-gateway.us.production.amboss.com"), {
-        method: 'POST',
-        headers: { "Authorization": "Bearer b14f45fa69c75edb1953f00bc4413332", "Content-Type": "application/json" },
-        body: JSON.stringify({
-            "query": "mutation AnkiQuestionSession(\n  $title: String!,\n  $questionIds: [ID!]!,\n  $statusCriterion: QuestionStatusCriterion,\n  $difficulties: [Difficulty!],\n  $maxSize: Int,\n  $order: QuestionOrder!\n) {\n  createCustomQuestionSession(\n    title: $title\n    mode: guidance\n    criteria: {\n      questionIds: $questionIds\n      statusCriterion: $statusCriterion\n      difficulties: $difficulties\n      maxSize: $maxSize\n      order: $order\n    }\n  ) {\n    ...on  QuestionSession {\n      eid\n      questionIds\n    }\n  }\n}",
-            "operationName": "AnkiQuestionSession",
-            "variables": {
-                "title": title,
-                "questionIds": [...qids],
-                "maxSize": qids.length,
-                "order": "initial",
-                "statusCriterion": { "resultSet": "all", "statuses": ["unseenOrSkipped", "answeredIncorrectly", "answeredCorrectlyWithHelp", "answeredCorrectly"] },
-                "difficulties": ["difficulty0", "difficulty1", "difficulty2", "difficulty3", "difficulty4"]
-            }
-        }),
-        redirect: 'follow'
-    }).then(response => response.json());
+        const eidData = await fetch('https://corsproxy.io/?' + encodeURIComponent("https://content-gateway.us.production.amboss.com"), {
+            method: 'POST',
+            headers: { "Authorization": "Bearer b14f45fa69c75edb1953f00bc4413332", "Content-Type": "application/json" },
+            body: JSON.stringify({
+                "query": "mutation AnkiQuestionSession(\n  $title: String!,\n  $questionIds: [ID!]!,\n  $statusCriterion: QuestionStatusCriterion,\n  $difficulties: [Difficulty!],\n  $maxSize: Int,\n  $order: QuestionOrder!\n) {\n  createCustomQuestionSession(\n    title: $title\n    mode: guidance\n    criteria: {\n      questionIds: $questionIds\n      statusCriterion: $statusCriterion\n      difficulties: $difficulties\n      maxSize: $maxSize\n      order: $order\n    }\n  ) {\n    ...on  QuestionSession {\n      eid\n      questionIds\n    }\n  }\n}",
+                "operationName": "AnkiQuestionSession",
+                "variables": {
+                    "title": title,
+                    "questionIds": [...qids],
+                    "maxSize": qids.length,
+                    "order": "initial",
+                    "statusCriterion": { "resultSet": "all", "statuses": ["unseenOrSkipped", "answeredIncorrectly", "answeredCorrectlyWithHelp", "answeredCorrectly"] },
+                    "difficulties": ["difficulty0", "difficulty1", "difficulty2", "difficulty3", "difficulty4"]
+                }
+            }),
+            redirect: 'follow'
+        }).then(response => response.json());
 
-    console.log(eidData, eidData.data.createCustomQuestionSession.eid);
-    popup("Found amboss test id: " + JSON.stringify(eidData.data.createCustomQuestionSession.eid), 1000);
+        console.log(eidData, eidData.data.createCustomQuestionSession.eid);
+        popup("Found amboss test id: " + JSON.stringify(eidData.data.createCustomQuestionSession.eid), 1000);
         return `https://next.amboss.com/us/questions/${eidData.data.createCustomQuestionSession.eid}/1?utm_source=anki&utm_medium=anki_card_browser_toolbar_button`;
     }
     //window.open(`https://next.amboss.com/us/questions/${eidData.data.createCustomQuestionSession.eid}/1?utm_source=anki&utm_medium=anki_card_browser_toolbar_button`, '_blank');
-    
+
 }
 
 function getHeaders() {
@@ -75,13 +75,13 @@ async function getFA() {
 
     var faTopics = {};
     index.children.forEach(c => {
-        var chapter = {...c};
+        var chapter = { ...c };
         delete chapter.children;
         c.children.forEach(s => {
-            var subject = {...s};
+            var subject = { ...s };
             delete subject.children;
             s.children.forEach(t => {
-                var topic = {...t};
+                var topic = { ...t };
                 delete topic.children;
                 topic.subject = subject;
                 topic.chapter = chapter;
@@ -127,7 +127,7 @@ async function waitForElm(selector) {
             return resolve(document.querySelector(selector));
         }
 
-		const observer = new MutationObserver(mutations => {
+        const observer = new MutationObserver(mutations => {
             if (document.querySelector(selector)) {
                 resolve(document.querySelector(selector));
                 observer.disconnect();
@@ -142,14 +142,14 @@ async function waitForElm(selector) {
 }
 
 
-const respondToVisibility = function(element, callback) {
-  var options = {root: document.documentElement}
-  var observer = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-      callback(entry.intersectionRatio > 0);
-    });
-  }, options);
-  observer.observe(element);
+const respondToVisibility = function (element, callback) {
+    var options = { root: document.documentElement }
+    var observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            callback(entry.intersectionRatio > 0);
+        });
+    }, options);
+    observer.observe(element);
 }
 
 function addcss(css) {
@@ -194,24 +194,24 @@ function popup(contents, timeout = 3000, cb = () => {}) {
     d.addEventListener('close', cb);
     document.body.appendChild(d);
     d.showModal();
-    setTimeout(() => (d.remove() && cb()), timeout);
+    if (timeout > 0) setTimeout(() => (d.remove() && cb()), timeout);
 }
 
 // safely handles circular references
 JSON.safeStringify = (obj, indent = 2) => {
-  let cache = [];
-  const retVal = JSON.stringify(
-    obj,
-    (key, value) =>
-      typeof value === "object" && value !== null
-        ? cache.includes(value)
-          ? undefined // Duplicate reference found, discard key
-          : cache.push(value) && value // Store value in our collection
-        : value,
-    indent
-  );
-  cache = null;
-  return retVal;
+    let cache = [];
+    const retVal = JSON.stringify(
+        obj,
+        (key, value) =>
+            typeof value === "object" && value !== null
+                ? cache.includes(value)
+                    ? undefined // Duplicate reference found, discard key
+                    : cache.push(value) && value // Store value in our collection
+                : value,
+        indent
+    );
+    cache = null;
+    return retVal;
 };
 
 
@@ -219,27 +219,27 @@ JSON.safeStringify = (obj, indent = 2) => {
 //waitForElementToDisplay("#div1",function(){alert("Hi");},1000,9000);
 
 function waitForElementToDisplay(selector, callback, checkFrequencyInMs = 100, timeoutInMs) {
-  var startTimeInMs = Date.now();
-  (function loopSearch() {
-    if (document.querySelector(selector) != null) {
-      callback(document.querySelector(selector));
-      return;
-    } else {
-      setTimeout(function () {
-        if (timeoutInMs && Date.now() - startTimeInMs > timeoutInMs) return;
-        loopSearch();
-      }, checkFrequencyInMs);
-    }
-  })();
+    var startTimeInMs = Date.now();
+    (function loopSearch() {
+        if (document.querySelector(selector) != null) {
+            callback(document.querySelector(selector));
+            return;
+        } else {
+            setTimeout(function () {
+                if (timeoutInMs && Date.now() - startTimeInMs > timeoutInMs) return;
+                loopSearch();
+            }, checkFrequencyInMs);
+        }
+    })();
 }
 
 
-(function() {
+(function () {
     var myCss = addcss(myStyle);
     waitForElementToDisplay(".card-content", (elm) => {
         //alert("card loaded");
         //alert(JSON.stringify([window.innerWidth, document.querySelector("mat-sidenav-content").offsetWidth, elm.offsetWidth]));
-        window.cscale = (document.querySelector("mat-sidenav-content").offsetWidth - 60)/elm.offsetWidth;
+        window.cscale = (document.querySelector("mat-sidenav-content").offsetWidth - 60) / elm.offsetWidth;
         myCss.innerText += `.card-content { transform: scale(${window.cscale}); }`;
     });
 
@@ -260,26 +260,21 @@ function waitForElementToDisplay(selector, callback, checkFrequencyInMs = 100, t
                 did = fat[pageId].deckId;
             }
             if (window.location.pathname.startsWith('/play-deck')) {
-                did = window.location.pathname.replace(/[^\d]/g,'');
+                did = window.location.pathname.replace(/[^\d]/g, '');
                 var topic = Object.values(fat).find(t => t.deckId == did);
                 pageId = topic.id;
             }
             title = `${fat[pageId].chapter.name}::${fat[pageId].subject.name}::${fat[pageId].name}::${fat[pageId].location}`;
             console.log(title);
             getCards(did, title).then(url => {
-                popup(`<h1>${title}</h1><br><br><a href="${url}">url</a>`, 10000)
-                console.log(url);
+                if (url) {
+                    //popup(`<h1>${title}</h1><br><br><a id="AMBOSSURL" href="${url}">${url}</a>`, 10000)
+                    popup(`<h1>${title}</h1><br><iframe src="${url}"></iframe>`, 0);
+                    console.log(url);
+                    //window.open(url);
+                    //document.querySelector("a#AMBOSSURL").click();
+                }
             });
-            //popup("CARDS DECK: " + did);
-//                getDeckIdFromPageId().then(did => {popup("Found deckId: " + did); return did;}).then(did => getCards(did, title)).then(url => console.log(url));
-//
-
-
-            /*const id = `${window.location.href.match(/play-deck\/\d+/)}`.replace(/[^\d]/g, '');
-            getCards(id).then(url => {
-                console.log(url);
-                window.open(url);
-            });*/
         }
     }
 })();
