@@ -1,0 +1,23 @@
+//startconfig
+//id=ls.bb.TESTING
+//icon=iVBORw0KGgoAAAANSUhEUgAAACwAAAAkCAYAAADy19hsAAAWrGlDQ1BJQ0...
+//title=TESTING
+//var=confirmation;type=confirmation;default=false;
+//var=language;type=language;
+//var=text;type=string;title=Text;
+//endconfig
+
+function DoSomething() {
+  // here's the actual code which is doing all the work of the module
+  alert("HELLO!");
+}
+
+if (confirmation) {
+  doAction = confirm("Really activate the module?");
+} else {
+  doAction = true;
+}
+
+if (doAction) {
+  DoSomething();
+}
