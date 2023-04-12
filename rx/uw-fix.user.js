@@ -299,7 +299,7 @@ function getTags(tags) {
 
 function akdo(action = 'deckNames', params = {}, version = 6) {
   return new Promise(async (resolve, reject) => {
-      const res = await fetch('http://127.0.0.1:8765', {
+      const res = await fetch('http://scutit:8765', {
           method: 'POST',
           headers: {
               'Accept': 'application/json',
