@@ -2,7 +2,7 @@
 // @name        uw-fix
 // @match    https://apps.uworld.com/courseapp/usmle/*
 // @grant       none
-// @version     0.1
+// @version     0.2
 // @author      Punya Jain
 // @description UWORLD-Anki Cards finder
 // @downloadURL https://punya10.github.io/rx/uw-fix.user.js
@@ -91,9 +91,6 @@ async function getFA() {
   });
   return faTopics;
 }
-
-
-
 
 async function getCards(id, title) {
   const headers = getHeaders();
@@ -214,10 +211,8 @@ JSON.safeStringify = (obj, indent = 2) => {
   return retVal;
 };
 
-
 // Call the below function
 //waitForElementToDisplay("#div1",function(){alert("Hi");},1000,9000);
-
 function waitForElementToDisplay(selector, callback, checkFrequencyInMs = 100, timeoutInMs) {
   var startTimeInMs = Date.now();
   (function loopSearch() {
@@ -233,6 +228,48 @@ function waitForElementToDisplay(selector, callback, checkFrequencyInMs = 100, t
   })();
 }
 
+// Load a script from given `url`
+const loadScript = function (url) {
+    return new Promise(function (resolve, reject) {
+        const script = document.createElement('script');
+        script.src = url;
+
+        script.addEventListener('load', function () {
+            // The script is loaded completely
+            resolve(true);
+        });
+
+        document.head.appendChild(script);
+    });
+};
+
+// Perform all promises in the order
+const waterfall = function (promises) {
+    return promises.reduce(
+        function (p, c) {
+            // Waiting for `p` completed
+            return p.then(function () {
+                // and then `c`
+                return c().then(function (result) {
+                    return true;
+                });
+            });
+        },
+        // The initial value passed to the reduce method
+        Promise.resolve([])
+    );
+};
+
+// Load an array of scripts in order
+const loadScriptsInOrder = function (arrayOfJs) {
+    const promises = arrayOfJs.map(function (url) {
+        return loadScript(url);
+    });
+    return waterfall(promises);
+};
+
+
+const ANKIURL = 'http://scutit.local:8765';
 
 function invoke(action, version, params = {}) {
   return new Promise((resolve, reject) => {
@@ -259,7 +296,7 @@ function invoke(action, version, params = {}) {
       }
     });
 
-    xhr.open('POST', 'http://scutit:8765');
+    xhr.open('POST', ANKIURL);
     xhr.send(JSON.stringify({
       action,
       version,
@@ -267,6 +304,36 @@ function invoke(action, version, params = {}) {
     }));
   });
 }
+
+function akdo(action = 'deckNames', params = {}, version = 6) {
+  return new Promise(async (resolve, reject) => {
+      const res = await fetch(ANKIURL, {
+          method: 'POST',
+          headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+              action,
+              version,
+              params
+          })
+      });
+      const data = await res.json();
+      //console.log(data);
+      if (!data.error) {
+          console.log("ANKIDO: ",JSON.stringify(action, params, data));
+          resolve(data.result);
+      } else {
+          reject(data.error);
+      }
+  });
+}
+
+
+import("//cdn.jsdelivr.net/npm/axios/dist/axios.min.js");
+const akx = async (action = 'deckNames', params = {}, version = 6) => await axios.post('http://localhost:8765', {action, version, params}).then(r => r.data.result).catch(r => r.data.error);
+
 
 //image crap
 function extractAllText(str) {
@@ -297,33 +364,9 @@ function getTags(tags) {
 }
 
 
-function akdo(action = 'deckNames', params = {}, version = 6) {
-  return new Promise(async (resolve, reject) => {
-      const res = await fetch('http://scutit:8765', {
-          method: 'POST',
-          headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-              action,
-              version,
-              params
-          })
-      });
-      const data = await res.json();
-      //console.log(data);
-      if (!data.error) {
-          console.log("ANKIDO: ",JSON.stringify(action, params, data));
-          resolve(data.result);
-      } else {
-          reject(data.error);
-      }
-  });
-}
 
 (function () {
-
+    var selector = "span.question-id";
 
 
   async function processQuestion() {
@@ -331,8 +374,8 @@ function akdo(action = 'deckNames', params = {}, version = 6) {
     const q = {};
     q.id = document.querySelector("span.question-id").textContent.replace(/[^\d]/g, '');
     q.query = `tag:#AK_Step1_v12::#UWorld::${q.id}`;
-    q.nids = await akdo('findNotes', {"query": q.query});
-    q.ninfo = await akdo('notesInfo', {
+    q.nids = await akx('findNotes', {"query": q.query});
+    q.ninfo = await akx('notesInfo', {
       "notes": q.nids
     });
     q.tags = [...new Set(q.ninfo.flatMap(note => note.tags))];
@@ -342,7 +385,7 @@ function akdo(action = 'deckNames', params = {}, version = 6) {
     async function getImgs(f) {
 
       var i = [...new Set(q.ninfo.flatMap(note => extractAllText(note.fields[f].value)))].filter(e => e);
-      var p = i.map(img => akdo('retrieveMediaFile',  {
+      var p = i.map(img => akx('retrieveMediaFile', {
         "filename": img
       }));
       return Promise.all(p).then(data => {
@@ -369,13 +412,8 @@ function akdo(action = 'deckNames', params = {}, version = 6) {
       var cards = q.ninfo.flatMap(n => n.cards);
       var destination = ['UW', q.path.System, q.path.Subject, q.path.Topic, q.path.id].join('::')
       console.log(destination, cards);
-      await akdo('unsuspend',  {
-        "cards": cards
-      });
-      await akdo('changeDeck', {
-        "cards": cards,
-        "deck": destination
-      });
+      await akx('unsuspend', {"cards": cards});
+      await akx('changeDeck', {"cards": cards, "deck": destination});
     }
 
     await addToQueue();
@@ -425,7 +463,7 @@ function akdo(action = 'deckNames', params = {}, version = 6) {
   }
 
 
-  var selector = "span.question-id";
+  
   var observer = new MutationObserver(mutations => {
     cb();
   });
