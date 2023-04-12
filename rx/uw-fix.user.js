@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        uw-fix
-// @match       *apps.uworld.com*
+// @match    https://apps.uworld.com/courseapp/usmle/*
 // @grant       none
 // @version     0.1
 // @author      Punya Jain
@@ -299,7 +299,7 @@ function getTags(tags) {
 }
 
 async function processQuestion() {
-  
+  document.querySelector("common-content").style.height = "100%";
   const q = {};
   q.id = document.querySelector("span.question-id").textContent.replace(/[^\d]/g, '');
   q.query = `tag:#AK_Step1_v12::#UWorld::${q.id}`;
@@ -425,7 +425,7 @@ async function cb() {
 }
 
   
-document.querySelector("common-content").style.height = "100%";
+
 window.onpointerup = (e) => e.target.dispatchEvent(new Event('mouseup'));
 cb();
 
