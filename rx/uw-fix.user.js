@@ -2,7 +2,7 @@
 // @name        uw-fix
 // @match    https://apps.uworld.com/courseapp/usmle/*
 // @grant       none
-// @version     0.2
+// @version     0.3
 // @author      Punya Jain
 // @description UWORLD-Anki Cards finder
 // @downloadURL https://punya10.github.io/rx/uw-fix.user.js
@@ -269,7 +269,7 @@ const loadScriptsInOrder = function (arrayOfJs) {
 };
 
 
-const ANKIURL = 'http://scutit.local:8765';
+//const ANKIURL = 'https://werk.asuscomm.com:8769';
 
 function invoke(action, version, params = {}) {
   return new Promise((resolve, reject) => {
@@ -331,8 +331,8 @@ function akdo(action = 'deckNames', params = {}, version = 6) {
 }
 
 
-import("//cdn.jsdelivr.net/npm/axios/dist/axios.min.js");
-const akx = async (action = 'deckNames', params = {}, version = 6) => await axios.post('http://localhost:8765', {action, version, params}).then(r => r.data.result).catch(r => r.data.error);
+//import("//cdn.jsdelivr.net/npm/axios/dist/axios.min.js");
+//const akx = async (action = 'deckNames', params = {}, version = 6) => await axios.post(ANKIURL, {action, version, params}).then(r => r.data.result).catch(r => r.data.error);
 
 
 //image crap
@@ -365,7 +365,14 @@ function getTags(tags) {
 
 
 
-(function () {
+(async function () {
+
+const ANKIURL = 'https://werk.asuscomm.com:8769';
+import("//cdn.jsdelivr.net/npm/axios/dist/axios.min.js");
+const akx = async (action = 'deckNames', params = {}, version = 6) => await axios.post(ANKIURL, {action, version, params}).then(r => r.data.result).catch(r => r.data.error);
+akx().then(console.log).catch(console.error)
+
+
     var selector = "span.question-id";
 
 
