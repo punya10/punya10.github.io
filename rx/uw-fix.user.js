@@ -296,6 +296,32 @@ function getTags(tags) {
   return result;
 }
 
+
+function akdo(action = 'deckNames', params = {}, version = 6) {
+  return new Promise(async (resolve, reject) => {
+      const res = await fetch('http://127.0.0.1:8765', {
+          method: 'POST',
+          headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+              action,
+              version,
+              params
+          })
+      });
+      const data = await res.json();
+      //console.log(data);
+      if (!data.error) {
+          console.log("ANKIDO: ",JSON.stringify(action, params, data));
+          resolve(data.result);
+      } else {
+          reject(data.error);
+      }
+  });
+}
+
 (function () {
 
 
@@ -305,10 +331,8 @@ function getTags(tags) {
     const q = {};
     q.id = document.querySelector("span.question-id").textContent.replace(/[^\d]/g, '');
     q.query = `tag:#AK_Step1_v12::#UWorld::${q.id}`;
-    q.nids = await invoke('findNotes', 6, {
-      "query": q.query
-    });
-    q.ninfo = await invoke('notesInfo', 6, {
+    q.nids = await akdo('findNotes', {"query": q.query});
+    q.ninfo = await akdo('notesInfo', {
       "notes": q.nids
     });
     q.tags = [...new Set(q.ninfo.flatMap(note => note.tags))];
@@ -318,7 +342,7 @@ function getTags(tags) {
     async function getImgs(f) {
 
       var i = [...new Set(q.ninfo.flatMap(note => extractAllText(note.fields[f].value)))].filter(e => e);
-      var p = i.map(img => invoke('retrieveMediaFile', 6, {
+      var p = i.map(img => akdo('retrieveMediaFile',  {
         "filename": img
       }));
       return Promise.all(p).then(data => {
@@ -345,10 +369,10 @@ function getTags(tags) {
       var cards = q.ninfo.flatMap(n => n.cards);
       var destination = ['UW', q.path.System, q.path.Subject, q.path.Topic, q.path.id].join('::')
       console.log(destination, cards);
-      await invoke('unsuspend', 6, {
+      await akdo('unsuspend',  {
         "cards": cards
       });
-      await invoke('changeDeck', 6, {
+      await akdo('changeDeck', {
         "cards": cards,
         "deck": destination
       });
