@@ -2,7 +2,7 @@
 // @name        uw-fix
 // @match    https://apps.uworld.com/courseapp/usmle/*
 // @grant       none
-// @version     0.7
+// @version     0.8
 // @author      Punya Jain
 // @description UWORLD-Anki Cards finder
 // @downloadURL https://punya10.github.io/rx/uw-fix.user.js
@@ -377,9 +377,9 @@ akx().then(console.log).catch(console.error)
 
 
   async function processQuestion() {
-    setTimeout(() => popup("30", 1000), 30000);
-    setTimeout(() => popup("45", 1000), 45000);
-    setTimeout(() => popup("60 ... MOVE ON!", 1000), 60000);
+    //setTimeout(() => popup("30", 1000), 30000);
+    //setTimeout(() => popup("45", 1000), 45000);
+    //setTimeout(() => popup("60 ... MOVE ON!", 1000), 60000);
        
     
     document.querySelector(".common-content").style.maxWidth = "unset";
@@ -502,9 +502,9 @@ akx().then(console.log).catch(console.error)
       var curr = document.querySelector(selector).textContent.replace(/[^\d]/g, '');
       console.log(curr);
       if (curr != lastqid) {
-       setTimeout(() => popup("30", 1000), 30000);
-       setTimeout(() => popup("45", 1000), 45000);
-       setTimeout(() => popup("60", 1000), 60000);
+       //setTimeout(() => popup("30", 1000), 30000);
+       //setTimeout(() => popup("45", 1000), 45000);
+       //setTimeout(() => popup("60", 1000), 60000);
        lastqid = curr;
       }
     }
