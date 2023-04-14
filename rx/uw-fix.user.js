@@ -420,9 +420,14 @@ akx().then(console.log).catch(console.error)
       //var destination = ['UW', q.path.System, q.path.Subject, q.path.Topic, q.path.id].join('::')
       var destination = ['UW',window.location.pathname.replace('/courseapp/usmle/v12/testinterface/launchtest/9300640/','').split('/')[0]].join('::');
       console.log(destination, cards);
-      await akx('unsuspend', {"cards": cards});
-      await akx('changeDeck', {"cards": cards, "deck": destination});
-      await akx('sync');
+      await akx('sync').then(() => {
+        setTimeout(async () => {
+          await akx('unsuspend', {"cards": cards});
+          await akx('changeDeck', {"cards": cards, "deck": destination});
+          await akx('sync');
+        }, 1000)
+      });
+      
     }
 
     await addToQueue();
