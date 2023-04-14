@@ -377,9 +377,11 @@ akx().then(console.log).catch(console.error)
 
 
   async function processQuestion() {
-    popup("30", 30000);
-    popup("45", 45000);
-    popup("60...MOVE ON!", 60000);
+    setTimeout(() => popup("30", 1000), 30000);
+    setTimeout(() => popup("45", 1000), 45000);
+    setTimeout(() => popup("60 ... MOVE ON!", 1000), 60000);
+       
+    
     document.querySelector(".common-content").style.maxWidth = "unset";
     const q = {};
     q.id = document.querySelector("span.question-id").textContent.replace(/[^\d]/g, '');
@@ -500,9 +502,9 @@ akx().then(console.log).catch(console.error)
       var curr = document.querySelector(selector).textContent.replace(/[^\d]/g, '');
       console.log(curr);
       if (curr != lastqid) {
-       popup("30",30000);
-       popup("45",45000);
-       popup("60",60000);
+       setTimeout(() => popup("30", 1000), 30000);
+       setTimeout(() => popup("45", 1000), 45000);
+       setTimeout(() => popup("60", 1000), 60000);
        lastqid = curr;
       }
     }
