@@ -2,7 +2,7 @@
 // @name        uw-fix
 // @match    https://apps.uworld.com/courseapp/usmle/*
 // @grant       none
-// @version     0.9.2
+// @version     0.9.3
 // @author      Punya Jain
 // @description UWORLD-Anki Cards finder
 // @downloadURL https://punya10.github.io/rx/uw-fix.user.js
@@ -522,12 +522,21 @@ akx().then(console.log).catch(console.error)
 
 
   waitForElm("common-content").then(elm => {
-    elm.style.height = "100%";
+    elm.style.height = "max(100vh, 100%)";
     var myCss = addcss(myStyle);
     myCss.innerText += `.question-content { max-width: 100% !important; }\n`;
-      window.onpointerup = (e) => e.target.dispatchEvent(new Event('mouseup'));
-      window.ontouchend = (e) => e.target.dispatchEvent(new Event('mouseup'));
-      window.ontouchleave = (e) => e.target.dispatchEvent(new Event('mouseup'));
+      //window.onpointerup = 
+    window.ontouchend = (e) => {
+        e.target.dispatchEvent(new Event('mouseup'));
+        e.target.dispatchEvent(new KeyboardEvent("keydown", {key : "Escape"}));
+        alert("te");
+      }
+    //window.ontouchleave = (e) => {
+    //    e.target.dispatchEvent(new KeyboardEvent("keydown", {key : "Escape"}));
+    //    e.target.dispatchEvent(new Event('mouseup'));
+    //    
+    //    alert("tl");
+    //  }
     cb();
   });
   
