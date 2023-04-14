@@ -377,7 +377,7 @@ akx().then(console.log).catch(console.error)
 
 
   async function processQuestion() {
-
+    document.querySelector(".common-content").style.maxWidth = "unset";
     const q = {};
     q.id = document.querySelector("span.question-id").textContent.replace(/[^\d]/g, '');
     q.query = `tag:#AK_Step1_v12::#UWorld::${q.id}`;
@@ -501,7 +501,7 @@ akx().then(console.log).catch(console.error)
 
   waitForElm("common-content").then(elm => {
     elm.style.height = "100%";
-    document.querySelector(".common-content").style.maxWidth = "unset";
+    
     window.onpointerup = (e) => e.target.dispatchEvent(new Event('mouseup'));
     cb();
   });
