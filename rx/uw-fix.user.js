@@ -2,7 +2,7 @@
 // @name        uw-fix
 // @match    https://apps.uworld.com/courseapp/usmle/*
 // @grant       none
-// @version     0.8
+// @version     0.9
 // @author      Punya Jain
 // @description UWORLD-Anki Cards finder
 // @downloadURL https://punya10.github.io/rx/uw-fix.user.js
@@ -185,13 +185,15 @@ dialog::backdrop {
 //popup("hello there 8", 8000, () => alert("FUCK YEAH!"));
 //popup("hello 5", 5000);
 //popup("hi 3");
-function popup(contents, timeout = 3000, cb = () => { }) {
-  var d = document.createElement("DIALOG");
-  d.innerHTML = contents;
-  d.addEventListener('close', cb);
-  document.body.appendChild(d);
-  d.showModal();
-  if (timeout > 0) setTimeout(() => (d.remove() && cb()), timeout);
+function popup(contents, delay = 1, timeout = 3000, cb = () => { }) {
+  setTimeout(() => {
+    var d = document.createElement("DIALOG");
+    d.innerHTML = contents;
+    d.addEventListener('close', cb);
+    document.body.appendChild(d);
+    d.showModal();
+    if (timeout > 0) setTimeout(() => (d.remove() && cb()), timeout);
+  }, delay);
 }
 
 // safely handles circular references
@@ -377,12 +379,12 @@ akx().then(console.log).catch(console.error)
 
 
   async function processQuestion() {
-    //setTimeout(() => popup("30", 1000), 30000);
-    //setTimeout(() => popup("45", 1000), 45000);
-    //setTimeout(() => popup("60 ... MOVE ON!", 1000), 60000);
+       popup("30", 30000, 1000);
+       popup("45", 45000, 1000);
+       popup("60 ... MOVE ON!", 60000, 1000);
        
     
-    document.querySelector(".common-content").style.maxWidth = "unset";
+    //document.querySelector(".common-content").style.maxWidth = "unset";
     const q = {};
     q.id = document.querySelector("span.question-id").textContent.replace(/[^\d]/g, '');
     q.query = `tag:#AK_Step1_v12::#UWorld::${q.id}`;
@@ -502,9 +504,9 @@ akx().then(console.log).catch(console.error)
       var curr = document.querySelector(selector).textContent.replace(/[^\d]/g, '');
       console.log(curr);
       if (curr != lastqid) {
-       //setTimeout(() => popup("30", 1000), 30000);
-       //setTimeout(() => popup("45", 1000), 45000);
-       //setTimeout(() => popup("60", 1000), 60000);
+       popup("30", 30000, 1000);
+       popup("45", 45000, 1000);
+       popup("60 ... MOVE ON!", 60000, 1000);
        lastqid = curr;
       }
     }
@@ -521,7 +523,11 @@ akx().then(console.log).catch(console.error)
     window.onpointerup = (e) => e.target.dispatchEvent(new Event('mouseup'));
     cb();
   });
-
+  
+  waitForElementToDisplay(".card-content", (elm) => {
+    var myCss = addcss(myStyle);
+    myCss.innerText += `.question-content { max-width: 100%; }\n`;
+  });
 
 
 })();
