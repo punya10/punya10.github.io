@@ -2,7 +2,7 @@
 // @name        uw-fix
 // @match    https://apps.uworld.com/courseapp/usmle/*
 // @grant       none
-// @version     0.9
+// @version     0.9.1
 // @author      Punya Jain
 // @description UWORLD-Anki Cards finder
 // @downloadURL https://punya10.github.io/rx/uw-fix.user.js
@@ -167,7 +167,7 @@ dialog {
 
 dialog::backdrop {
     background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.4));
-    animation: fade-in 1s;
+    animation: fade-in 0.5s;
 }
 
 @keyframes fade-in {
@@ -185,10 +185,11 @@ dialog::backdrop {
 //popup("hello there 8", 8000, () => alert("FUCK YEAH!"));
 //popup("hello 5", 5000);
 //popup("hi 3");
-function popup(contents, delay = 1, timeout = 3000, cb = () => { }) {
+function popup(contents, delay = 1, timeout = 3000, bg = 'white', cb = () => { }) {
   setTimeout(() => {
     var d = document.createElement("DIALOG");
     d.innerHTML = contents;
+    d.style.background = bg;
     d.addEventListener('close', cb);
     document.body.appendChild(d);
     d.showModal();
@@ -368,6 +369,7 @@ function getTags(tags) {
 
 
 (async function () {
+    var ppts = [2000, 5000, 8000];
 var lastqid = 0;
 const ANKIURL = 'https://werk.asuscomm.com:8769';
 import("//cdn.jsdelivr.net/npm/axios/dist/axios.min.js");
@@ -379,9 +381,10 @@ akx().then(console.log).catch(console.error)
 
 
   async function processQuestion() {
-       popup("30", 30000, 1000);
-       popup("45", 45000, 1000);
-       popup("60 ... MOVE ON!", 60000, 1000);
+
+        //popup("30", ppts[0], 1000, 'green');
+        //popup("45", ppts[1], 1000, 'yellow');
+        //popup("60 ... MOVE ON!", ppts[2], 1000, 'red');
        
     
     //document.querySelector(".common-content").style.maxWidth = "unset";
@@ -427,13 +430,13 @@ akx().then(console.log).catch(console.error)
       //var destination = ['UW', q.path.System, q.path.Subject, q.path.Topic, q.path.id].join('::')
       var destination = ['UW',window.location.pathname.replace('/courseapp/usmle/v12/testinterface/launchtest/9300640/','').split('/')[0]].join('::');
       console.log(destination, cards);
-      await akx('sync').then(() => {
-        setTimeout(async () => {
-          await akx('unsuspend', {"cards": cards});
-          await akx('changeDeck', {"cards": cards, "deck": destination});
-          await akx('sync');
-        }, 1000)
-      });
+      //await akx('sync').then(() => {
+      //  setTimeout(async () => {
+          //await akx('unsuspend', {"cards": cards});
+          //await akx('changeDeck', {"cards": cards, "deck": destination});
+          //await akx('sync');
+      //  }, 1000)
+      //});
       
     }
 
@@ -499,16 +502,17 @@ akx().then(console.log).catch(console.error)
   }
 
 
+
   async function cb() {
     if (document.querySelector(selector)) {
       var curr = document.querySelector(selector).textContent.replace(/[^\d]/g, '');
       console.log(curr);
-      if (curr != lastqid) {
-       popup("30", 30000, 1000);
-       popup("45", 45000, 1000);
-       popup("60 ... MOVE ON!", 60000, 1000);
-       lastqid = curr;
-      }
+      /*if (curr != lastqid) {
+        popup("30", ppts[0], 1000, 'green');
+        popup("45", ppts[1], 1000, 'yellow');
+        popup("60 ... MOVE ON!", ppts[2], 1000, 'red');
+        lastqid = curr;
+      }*/
     }
     stopObserver();
     window.q = await processQuestion();
@@ -519,15 +523,13 @@ akx().then(console.log).catch(console.error)
 
   waitForElm("common-content").then(elm => {
     elm.style.height = "100%";
-    
+    var myCss = addcss(myStyle);
+    myCss.innerText += `.question-content { max-width: 100% !important; }\n`;
     window.onpointerup = (e) => e.target.dispatchEvent(new Event('mouseup'));
     cb();
   });
   
-  waitForElementToDisplay(".card-content", (elm) => {
-    var myCss = addcss(myStyle);
-    myCss.innerText += `.question-content { max-width: 100%; }\n`;
-  });
+
 
 
 })();
