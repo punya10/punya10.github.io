@@ -2,7 +2,7 @@
 // @name        uw-fix
 // @match    https://apps.uworld.com/courseapp/usmle/*
 // @grant       none
-// @version     0.5
+// @version     0.6
 // @author      Punya Jain
 // @description UWORLD-Anki Cards finder
 // @downloadURL https://punya10.github.io/rx/uw-fix.user.js
@@ -366,7 +366,7 @@ function getTags(tags) {
 
 
 (async function () {
-
+var lastqid = 0;
 const ANKIURL = 'https://werk.asuscomm.com:8769';
 import("//cdn.jsdelivr.net/npm/axios/dist/axios.min.js");
 const akx = async (action = 'deckNames', params = {}, version = 6) => await axios.post(ANKIURL, {action, version, params}).then(r => r.data.result).catch(r => r.data.error);
@@ -377,6 +377,9 @@ akx().then(console.log).catch(console.error)
 
 
   async function processQuestion() {
+    popup("30", 30000);
+    popup("45", 45000);
+    popup("60...MOVE ON!", 60000);
     document.querySelector(".common-content").style.maxWidth = "unset";
     const q = {};
     q.id = document.querySelector("span.question-id").textContent.replace(/[^\d]/g, '');
@@ -496,6 +499,12 @@ akx().then(console.log).catch(console.error)
     if (document.querySelector(selector)) {
       var curr = document.querySelector(selector).textContent.replace(/[^\d]/g, '');
       console.log(curr);
+      if (curr != lastqid) {
+       popup("30",30000);
+       popup("45",45000);
+       popup("60",60000);
+       lastqid = curr;
+      }
     }
     stopObserver();
     window.q = await processQuestion();
