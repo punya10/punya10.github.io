@@ -2,7 +2,7 @@
 // @name        uw-fix
 // @match    https://apps.uworld.com/courseapp/usmle/*
 // @grant       none
-// @version     0.3
+// @version     0.4
 // @author      Punya Jain
 // @description UWORLD-Anki Cards finder
 // @downloadURL https://punya10.github.io/rx/uw-fix.user.js
@@ -417,10 +417,12 @@ akx().then(console.log).catch(console.error)
 
     async function addToQueue() {
       var cards = q.ninfo.flatMap(n => n.cards);
-      var destination = ['UW', q.path.System, q.path.Subject, q.path.Topic, q.path.id].join('::')
+      //var destination = ['UW', q.path.System, q.path.Subject, q.path.Topic, q.path.id].join('::')
+      var destination = ['UW',window.location.pathname.replace('/courseapp/usmle/v12/testinterface/launchtest/9300640/','').split('/')[0]].join('::');
       console.log(destination, cards);
       await akx('unsuspend', {"cards": cards});
       await akx('changeDeck', {"cards": cards, "deck": destination});
+      await akx('sync');
     }
 
     await addToQueue();
@@ -499,6 +501,7 @@ akx().then(console.log).catch(console.error)
 
   waitForElm("common-content").then(elm => {
     elm.style.height = "100%";
+    document.querySelector(".common-content").style.maxWidth = "unset";
     window.onpointerup = (e) => e.target.dispatchEvent(new Event('mouseup'));
     cb();
   });
