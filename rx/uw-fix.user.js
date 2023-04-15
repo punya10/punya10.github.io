@@ -542,7 +542,7 @@ akx().then(console.log).catch(console.error)
     }
     var btn = document.createElement("button");
     btn.textContent = 'SYNC';
-    btn.onclick = async () => await axios('http://192.168.1.127:8766/sync').then(console.log).catch(console.error);
+    btn.onclick = () => window.open('http://192.168.1.127:8766/sync', "_blank");
     document.querySelector("#leftNavigator").appendChild(btn);
     btn.click();
     cb();
