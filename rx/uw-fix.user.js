@@ -185,8 +185,9 @@ dialog::backdrop {
 //popup("hello there 8", 8000, () => alert("FUCK YEAH!"));
 //popup("hello 5", 5000);
 //popup("hi 3");
-function popup(contents, delay = 1, timeout = 3000, bg = 'white', cb = () => { }) {
+function popup(contents, delay = 1, timeout = 3000, bg = 'white', cf = () => { }, cb = () => { }) {
   setTimeout(() => {
+    cf();
     var d = document.createElement("DIALOG");
     d.innerHTML = contents;
     d.style.background = bg;
@@ -381,10 +382,12 @@ akx().then(console.log).catch(console.error)
 
 
   async function processQuestion() {
-    document.querySelector('#first-explanation > p:last-of-type').innerHTML = document.querySelector('#first-explanation > p:last-of-type').innerHTML.replace(/(\.(&nbsp;|\s)*|<br>[\n"]*)/g, '.<br>&#8226; ').replace(/\.<br>&#8226; $/g,'.');
-        //popup("30", ppts[0], 1000, 'green');
-        //popup("45", ppts[1], 1000, 'yellow');
-        //popup("60 ... MOVE ON!", ppts[2], 1000, 'red');
+    
+    if (window.ambossController) window.ambossController.ambossifyCard();
+    //document.querySelector('#first-explanation > p:last-of-type').innerHTML = document.querySelector('#first-explanation > p:last-of-type').innerHTML.replace(/(\.(&nbsp;|\s)*|<br>[\n"]*)/g, '.<br>&#8226; ').replace(/\.<br>&#8226; $/g,'.');
+    popup(ppts[0], ppts[0], 1000, 'green', stopObserver, startObserver);
+    popup(ppts[1], ppts[1], 1000, 'yellow', stopObserver, startObserver);
+    popup(ppts[2], ppts[2], 1000, 'red', stopObserver, startObserver);
        
     
     //document.querySelector(".common-content").style.maxWidth = "unset";
@@ -569,6 +572,20 @@ akx().then(console.log).catch(console.error)
     btn.onclick = () => { let w = window.open('http://192.168.1.127:8766/sync', "_blank"); setTimeout(() => w.close(), 1000); }
     document.querySelector("#leftNavigator").appendChild(btn);
     (confirm("Sync?")) ? btn.click() : null;
+    
+    document.querySelector('common-content').id = 'qa';
+    var s = document.createElement('script');
+    s.type = "module";
+    s.setAttribute("data-addon", "eyJhbm9uSWQiOiAiNDM2NmVhYjItZDNmNS00NGQ5LTkxZjUtNjA1YmVjNDg2NTNmIiwgInVzZXJJZCI6ICJDM1BXcWtlbDAiLCAidG9rZW4iOiAiZXlKaGJHY2lPaUpTVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmxlSEFpT2pFMk9ETTBPVEExTWpRc0ltbHpjeUk2SWtGTlFrOVRVeUlzSW5OMVlpSTZJa016VUZkeGEyVnNNQ0lzSW1saGRDSTZNVFk0TURnNU9EVXlOSDAuT0JGUnNHYTVNbFF6TUhDOV9jU2djMFlJaWdHaEV6RnJvUnNVaU1MakNKYUxHLVpmQ1N0QTROSjJEN3VqQWgySE1lbHUyWERDODlXb2xuV2VBdmtoRWFmZlFfcUJiMVNDNmJvN0RGNTFXdmNtOUtCY0JJbVcxQzlyNWtTQUF4MzhPTi1oa3pRaGhLbV84aW92MnRraVotRUpCUUpJcG5JSk5CNVZGVUk2Vzd6azh0MmhyYWlWdTVreDFSeWJxbFRCZmtxcHhlMWN5bHRXR21yT1JvR01qaTRDQ0k3MHd5VWwyWUtLLTFBRGh3NkUwNDNGc1p4TXpQUnEtRkJWdmNaLWk1UkFiVHJLemYwTWItZVhOZ2k0Y0d4WE04WGIwRlI3czBfTG42QWF2QWk0NkpEWVlFSXZUOTdYZm9aeTZoQ3VOM2RxZU1oZnhrTFQ4eWRzNlM4NFNRIn0=");
+    s.id = "amboss-snippet";
+    s.onload = () => {
+        alert("AMBOSS LOADED");
+    }
+    s.src = "https://content-gateway.us.production.amboss.com/amboss.js";
+    document.head.appendChild(s);
+
+    
+    
     cb();
   });
   
