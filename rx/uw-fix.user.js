@@ -2,7 +2,7 @@
 // @name        uw-fix
 // @match    https://apps.uworld.com/courseapp/usmle/*
 // @grant       none
-// @version     0.9.9
+// @version     1.0
 // @author      Punya Jain
 // @description UWORLD-Anki Cards finder
 // @downloadURL https://punya10.github.io/rx/uw-fix.user.js
@@ -381,7 +381,7 @@ akx().then(console.log).catch(console.error)
 
 
   async function processQuestion() {
-    document.querySelector('#first-explanation > p:last-of-type').classList.add("edu-obj");
+    document.querySelector('#first-explanation > p:last-of-type').innerHTML = document.querySelector('#first-explanation > p:last-of-type').innerHTML.replace(/(\.(&nbsp;|\s)*|<br>[\n"]*)/g, '.<br>&#8226; ').replace(/\.<br>&#8226; $/g,'.');
         //popup("30", ppts[0], 1000, 'green');
         //popup("45", ppts[1], 1000, 'yellow');
         //popup("60 ... MOVE ON!", ppts[2], 1000, 'red');
@@ -529,10 +529,23 @@ akx().then(console.log).catch(console.error)
       max-width: 100% !important;
     }
 
-    .edu-obj {
-      background-color: var(--primary);
-      color: var(--nav-header-font);
+    #first-explanation > p:last-of-type {
+      padding: 1em;
+      font-size: 1.42691em;
+      background-color: #ff007f;
+      text-indent: -1.0em;
+      padding-left: 2.4em;
+      /*background-color: blue;*/
+      
+      /* background-color: var(--primary);*/
+      color: yellow;
+      /*color: var(--nav-header-font);*/
     }
+     #first-explanation > p:last-of-type > .textHighlight {
+      color: #0000ff;
+    }
+    
+    
     `;
       //window.onpointerup = 
     document.ontouchend = (e) => {
@@ -542,7 +555,7 @@ akx().then(console.log).catch(console.error)
     }
     var btn = document.createElement("button");
     btn.textContent = 'SYNC';
-    btn.onclick = () => window.open('http://192.168.1.127:8766/sync', "_blank");
+    btn.onclick = () => { let w = window.open('http://192.168.1.127:8766/sync', "_blank"); setTimeout(() => w.close(), 1000); }
     document.querySelector("#leftNavigator").appendChild(btn);
     btn.click();
     cb();
