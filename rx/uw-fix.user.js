@@ -540,7 +540,11 @@ akx().then(console.log).catch(console.error)
       document.querySelectorAll("i.fa-circle.fa-stack-1x.fas.highlighter")[0].click();
       //document.dispatchEvent(new KeyboardEvent("keydown", {key : "Escape"}));
     }
-    
+    var btn = document.createElement("button");
+    btn.textContent = 'SYNC';
+    btn.onclick = () => axios('http://localhost:8766/sync').then(console.log).catch(console.error);
+    document.querySelector("#leftNavigator").appendChild(btn);
+    btn.click();
     cb();
   });
   
