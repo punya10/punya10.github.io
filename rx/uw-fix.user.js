@@ -2,7 +2,7 @@
 // @name        uw-fix
 // @match    https://apps.uworld.com/courseapp/usmle/*
 // @grant       none
-// @version     0.9.8
+// @version     0.9.9
 // @author      Punya Jain
 // @description UWORLD-Anki Cards finder
 // @downloadURL https://punya10.github.io/rx/uw-fix.user.js
@@ -538,7 +538,7 @@ akx().then(console.log).catch(console.error)
     document.ontouchend = (e) => {
       //document.dispatchEvent(new Event('mouseup'));
       document.querySelectorAll("i.fa-circle.fa-stack-1x.fas.highlighter")[0].click();
-      //document.dispatchEvent(new KeyboardEvent("keydown", {key : "Escape"}));
+      document.dispatchEvent(new KeyboardEvent("keydown", {key : "Escape"}));
     }
     var btn = document.createElement("button");
     btn.textContent = 'SYNC';
