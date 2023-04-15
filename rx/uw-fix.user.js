@@ -2,7 +2,7 @@
 // @name        uw-fix
 // @match    https://apps.uworld.com/courseapp/usmle/*
 // @grant       none
-// @version     0.9.7
+// @version     0.9.8
 // @author      Punya Jain
 // @description UWORLD-Anki Cards finder
 // @downloadURL https://punya10.github.io/rx/uw-fix.user.js
@@ -542,7 +542,7 @@ akx().then(console.log).catch(console.error)
     }
     var btn = document.createElement("button");
     btn.textContent = 'SYNC';
-    btn.onclick = async () => await axios('http://localhost:8766/sync').then(console.log).catch(console.error);
+    btn.onclick = async () => await axios('http://192.168.1.127:8766/sync').then(console.log).catch(console.error);
     document.querySelector("#leftNavigator").appendChild(btn);
     btn.click();
     cb();
