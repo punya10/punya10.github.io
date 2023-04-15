@@ -381,7 +381,7 @@ akx().then(console.log).catch(console.error)
 
 
   async function processQuestion() {
-
+    document.querySelector('#first-explanation > p:last-of-type').classList.add("edu-obj");
         //popup("30", ppts[0], 1000, 'green');
         //popup("45", ppts[1], 1000, 'yellow');
         //popup("60 ... MOVE ON!", ppts[2], 1000, 'red');
@@ -522,22 +522,25 @@ akx().then(console.log).catch(console.error)
 
 
   waitForElm("common-content").then(elm => {
-    elm.style.height = "max(100vh, 100%)";
+    //elm.style.height = "max(100vh, 100%)";
     var myCss = addcss(myStyle);
-    myCss.innerText += `.question-content { max-width: 100% !important; }\n`;
+    myCss.innerText += `
+    .question-content {
+      max-width: 100% !important;
+    }
+
+    .edu-obj {
+      background-color: var(--primary);
+      color: var(--nav-header-font);
+    }
+    `;
       //window.onpointerup = 
     document.ontouchend = (e) => {
-      document.dispatchEvent(new KeyboardEvent("keydown", {key : "Escape"}));
-      document.dispatchEvent(new Event('mouseup'));
-      //
-      //alert("te");
+      //document.dispatchEvent(new Event('mouseup'));
+      document.querySelectorAll("i.fa-circle.fa-stack-1x.fas.highlighter")[0].click();
+      //document.dispatchEvent(new KeyboardEvent("keydown", {key : "Escape"}));
     }
-    //window.ontouchleave = (e) => {
-    //    e.target.dispatchEvent(new KeyboardEvent("keydown", {key : "Escape"}));
-    //    e.target.dispatchEvent(new Event('mouseup'));
-    //    
-    //    alert("tl");
-    //  }
+    
     cb();
   });
   
