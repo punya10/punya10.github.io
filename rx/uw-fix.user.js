@@ -224,42 +224,45 @@ function initHLs(last = 'highlighter_yellow') {
 
 
 class Popup {
-    contents = '';
+    contents = '<--- Your Content Here --->';
     delay = 0;
     timeout = 1000;
     bg = '#0074D9';
     el;
-    onShow() { }
-    onDone() { }
-    onCancel() { }
+    onShow() {}
+    onDone() {}
+    onCancel() {}
     collection;
 
-    constructor(collection,args) {
+    constructor(collection, args) {
         //this.arguments = arguments;
-        this.collection = collection || window.qpps.active;
+        this.collection = collection
         this.args = args;
-        for (var k in args) { this[k] = args[k]; }
-        
-        this.toid = setTimeout(() => {
-            // run pre dialog code
-            this.onShow && this.onShow();
+        for (var k in args) {
+            this[k] = args[k];
+        }
 
-            // create & show the dialog
-            this.el = document.createElement("DIALOG");
-            this.el.innerHTML = this.contents;
-            this.el.style.background = this.bg;
-            this.el.addEventListener('close', () => {this.close(this.el)});
-            document.body.appendChild(this.el);
-            this.el.showModal();
-            setTimeout(() => {this.close(this.el)}, this.timeout);
-
-        }, this.delay);
+        this.toid = setTimeout(this.create.bind(this), this.delay);
         console.log(this);
     }
 
-    close(diag) {
-        console.log("closing", diag, this)
-        diag.remove();
+    create() {
+        this.el = document.createElement("DIALOG");
+        this.el.innerHTML = this.contents;
+        this.el.style.background = this.bg;
+
+        document.body.appendChild(this.el);
+        
+        this.onShow && this.onShow();
+        this.el.showModal();
+        
+        this.el.addEventListener('close', this.close.bind(this));
+        setTimeout(this.close.bind(this), this.timeout);
+    }
+
+    close() {
+        console.log("closing", this)
+        this.el.remove();
         this.onDone && this.onDone();
         this.delete();
     }
@@ -273,85 +276,39 @@ class Popup {
 
     delete() {
         var idx = this.collection.indexOf(this);
-        console.log('idx',i, this.collection[i], this);
+        console.log("curridx =",idx,this.toid, this.collection);
+        delete this.collection[idx];
         this.collection.splice(idx, 1);
-        console.log('idx',i, this.collection[i], this);
+        console.log("curridx =",idx,this.toid, this.collection);
     }
 }
+
 class Popups {
     active = [];
     constructor(args) {
         args.forEach(a => this.create(a));
     }
-
     create(arg) {
         this.active.push(new Popup(this.active,arg));
     }
 
     cancelAll() {
-        console.log("NEEDING TO BE CANCELLED:",this.active, this.active.forEach(p => p.cancel()));
+        while(this.active.length) {
+            this.active[0].cancel()
+        }
     }
-    
-}
-window.qpps = new Popups([{contents: "20", delay: 2000, timeout: 250, bg: '#01FF70'}, {contents: "20", delay: 5000, timeout: 250, bg: '#01FF70'}]); 
-setTimeout(() => {
-    window.qpps.active.forEach(p => {
-        console.log('triggering...',p);
-        p.cancel();
-        console.log( window.qpps.active);
-    })
-},1000);
-
-
-
-function popup(contents, delay = 1, timeout = 3000, bg = 'white', fnbefore = () => { }, fnafter = () => { }) {
-    if (!window.qpps) {
-        window.qpps = {};
-        window.qpps.active = {};
-        window.qpps.cancel = (p) => {
-            window.qpps.active[p].toid && clearTimeout(window.qpps.active[p].toid);
-            delete window.qpps.active[p];
-        };
-        window.qpps.cancelAll = () => Object.keys(window.qpps.active).forEach(p => window.qpps.cancel(p));
-    }
-    const pp = {
-        contents: contents,
-        delay: delay,
-        timeout: timeout,
-    };
-    const toid = setTimeout(() => {
-        fnbefore();
-        var d = document.createElement("DIALOG");
-        d.innerHTML = contents;
-        d.style.background = bg;
-        d.addEventListener('close', fnafter);
-        document.body.appendChild(d);
-        d.showModal();
-        setTimeout(() => {
-
-            d.remove();
-            fnafter();
-        }, timeout);
-    }, delay);
-    window.qpps.active.push(toid);
 }
 
+window.qpps = new Popups();
 
 function makePopups(qid) {
-
+    window.qpps.cancelAll();
     if (document.querySelector('#explanation-container').hasAttribute("hidden")) { //explaination hidden, so make popups!
-        popup("20", 20000, 250, '#01FF70'))
-        ,
-        popup("40", 40000, 250, '#FFDC00'),
-            popup("60...MOVE ON!", 60000, 250, '#F012BE')
-        ];
+        window.qpps.create({contents: "20", delay: 20000, timeout: 250, bg: '#01FF70'});
+        window.qpps.create({contents: "40", delay: 40000, timeout: 250, bg: '#FFDC00'});
+        window.qpps.create({contents: "60...MOVE ON!", delay: 60000, timeout: 250, bg: '#F012BE'});
     }
 }
-
-
-
-
-
 
 var lastqid = 0;
 waitEl('common-content').then(cc => {
@@ -365,9 +322,8 @@ waitEl('common-content').then(cc => {
     waitEl('.question-id').then(qel => {
         onCharChange(qel, async (qid) => {
             //Question Loaded!
-
-
             makePopups(qid);
+            
             console.log(qid);
 
             if (qid != lastqid) {
