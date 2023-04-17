@@ -232,9 +232,11 @@ class Popup {
     onShow() { }
     onDone() { }
     onCancel() { }
+    collection;
 
-    constructor(args) {
-        this.arguments = arguments;
+    constructor(collection,args) {
+        //this.arguments = arguments;
+        this.collection = collection || window.qpps.active;
         this.args = args;
         for (var k in args) { this[k] = args[k]; }
         
@@ -255,17 +257,50 @@ class Popup {
         console.log(this);
     }
 
-    close(el) {
-        console.log("closing", el)
-        el.remove();
+    close(diag) {
+        console.log("closing", diag, this)
+        diag.remove();
         this.onDone && this.onDone();
+        this.delete();
     }
 
     cancel() {
+        console.log("canceling", this)
         this.toid && clearTimeout(this.toid);
         this.onCancel && this.onCancel();
+        this.delete();
+    }
+
+    delete() {
+        var idx = this.collection.indexOf(this);
+        console.log('idx',i, this.collection[i], this);
+        this.collection.splice(idx, 1);
+        console.log('idx',i, this.collection[i], this);
     }
 }
+class Popups {
+    active = [];
+    constructor(args) {
+        args.forEach(a => this.create(a));
+    }
+
+    create(arg) {
+        this.active.push(new Popup(this.active,arg));
+    }
+
+    cancelAll() {
+        console.log("NEEDING TO BE CANCELLED:",this.active, this.active.forEach(p => p.cancel()));
+    }
+    
+}
+window.qpps = new Popups([{contents: "20", delay: 2000, timeout: 250, bg: '#01FF70'}, {contents: "20", delay: 5000, timeout: 250, bg: '#01FF70'}]); 
+setTimeout(() => {
+    window.qpps.active.forEach(p => {
+        console.log('triggering...',p);
+        p.cancel();
+        console.log( window.qpps.active);
+    })
+},1000);
 
 
 
