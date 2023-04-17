@@ -299,7 +299,6 @@ class Popups {
     }
 }
 
-window.qpps = new Popups();
 
 function makePopups(qid) {
     window.qpps.cancelAll();
@@ -313,7 +312,7 @@ function makePopups(qid) {
 var lastqid = 0;
 waitEl('common-content').then(cc => {
     var myCss = addcss(myStyle);
-
+    window.qpps = new Popups();
     initSync(false, false);
     initHLs();
     ambossify(false);
