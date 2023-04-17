@@ -197,7 +197,7 @@ function initHLs(last = 'highlighter_yellow') {
             color: window.getComputedStyle(h, null).getPropertyValue("color")
         };
 
-        
+
         var btn = document.createElement("button");
         btn.id = hb[hn].name;
         btn.textContent = hb[hn].short;
@@ -223,14 +223,67 @@ function initHLs(last = 'highlighter_yellow') {
 }
 
 
+class Popup {
+    contents = '';
+    delay = 0;
+    timeout = 1000;
+    bg = '#0074D9';
+    el;
+    onShow() { }
+    onDone() { }
+    onCancel() { }
+
+    constructor(args) {
+        this.arguments = arguments;
+        this.args = args;
+        for (var k in args) { this[k] = args[k]; }
+        
+        this.toid = setTimeout(() => {
+            // run pre dialog code
+            this.onShow && this.onShow();
+
+            // create & show the dialog
+            this.el = document.createElement("DIALOG");
+            this.el.innerHTML = this.contents;
+            this.el.style.background = this.bg;
+            this.el.addEventListener('close', () => {this.close(this.el)});
+            document.body.appendChild(this.el);
+            this.el.showModal();
+            setTimeout(() => {this.close(this.el)}, this.timeout);
+
+        }, this.delay);
+        console.log(this);
+    }
+
+    close(el) {
+        console.log("closing", el)
+        el.remove();
+        this.onDone && this.onDone();
+    }
+
+    cancel() {
+        this.toid && clearTimeout(this.toid);
+        this.onCancel && this.onCancel();
+    }
+}
+
+
+
 function popup(contents, delay = 1, timeout = 3000, bg = 'white', fnbefore = () => { }, fnafter = () => { }) {
     if (!window.qpps) {
         window.qpps = {};
         window.qpps.active = {};
-        window.qpps.cancelAll = () => {
-            window.qpps.active.forEach(toid => clearTimeout(toid));
-        }
+        window.qpps.cancel = (p) => {
+            window.qpps.active[p].toid && clearTimeout(window.qpps.active[p].toid);
+            delete window.qpps.active[p];
+        };
+        window.qpps.cancelAll = () => Object.keys(window.qpps.active).forEach(p => window.qpps.cancel(p));
     }
+    const pp = {
+        contents: contents,
+        delay: delay,
+        timeout: timeout,
+    };
     const toid = setTimeout(() => {
         fnbefore();
         var d = document.createElement("DIALOG");
@@ -250,11 +303,11 @@ function popup(contents, delay = 1, timeout = 3000, bg = 'white', fnbefore = () 
 
 
 function makePopups(qid) {
-    
+
     if (document.querySelector('#explanation-container').hasAttribute("hidden")) { //explaination hidden, so make popups!
         popup("20", 20000, 250, '#01FF70'))
         ,
-            popup("40", 40000, 250, '#FFDC00'),
+        popup("40", 40000, 250, '#FFDC00'),
             popup("60...MOVE ON!", 60000, 250, '#F012BE')
         ];
     }
@@ -277,7 +330,7 @@ waitEl('common-content').then(cc => {
     waitEl('.question-id').then(qel => {
         onCharChange(qel, async (qid) => {
             //Question Loaded!
-            
+
 
             makePopups(qid);
             console.log(qid);
