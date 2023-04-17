@@ -14,10 +14,10 @@
 // ==/UserScript==
 
 const ANKIURL = 'https://werk.asuscomm.com:8769';
-var ppts = [2000, 5000, 8000];
+var ppts = [3000, 5000, 8000];
 
 var myStyle = `
-dialog { box-shadow: 0 2px 5px rgba(0,0,0,0.3); border: none; border-radius: 10px; }
+dialog { box-shadow: 0 2px 5px rgba(0,0,0,0.3); border: none; border-radius: 10px; opacity: 0.25; }
 dialog::backdrop { background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.4)); animation: fade-in 0.5s; }
 @keyframes fade-in {
     from { opacity: 0; }
@@ -37,20 +37,6 @@ function addcss(css) {
     return s;
 }
 
-
-
-function popup(contents, delay = 1, timeout = 3000, bg = 'white', cf = () => { }, cb = () => { }) {
-    setTimeout(() => {
-        cf();
-        var d = document.createElement("DIALOG");
-        d.innerHTML = contents;
-        d.style.background = bg;
-        d.addEventListener('close', cb);
-        document.body.appendChild(d);
-        d.showModal();
-        if (timeout > 0) setTimeout(() => (d.remove() && cb()), timeout);
-    }, delay);
-}
 
 // Perform all promises in the order
 const waterfall = function (promises) {
@@ -81,10 +67,6 @@ function extractAllText(str) {
         result : [str];
 }
 
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text);
-}
-
 function getTags(tags) {
     var filters = ["#FirstAid", "#B&B", "#SketchyMicro", "#SketchyPharm", "#SketchyPath", "#OME", "#Pixorize", "#SketchyBiochem", "#AMBOSS"];
     var result = {};
@@ -97,17 +79,15 @@ function getTags(tags) {
     return result;
 }
 
-
-const akx = async (action = 'deckNames', params = {}, version = 6) => await axios.post(ANKIURL, {action, version, params}).then(r => r.data.result).catch(r => r.data.error);
-
+const akx = async (action = 'deckNames', params = {}, version = 6) => await axios.post(ANKIURL, { action, version, params }).then(r => r.data.result).catch(r => r.data.error);
 
 function waitEl(sel) {
-    return new Promise(resolve=>{
+    return new Promise(resolve => {
         if (document.querySelector(sel)) {
             resolve(document.querySelector(sel));
             return;
         }
-        new MutationObserver((mutations,observer)=>{
+        new MutationObserver((mutations, observer) => {
             if (document.querySelector(sel)) {
                 resolve(document.querySelector(sel));
                 observer.disconnect();
@@ -120,14 +100,12 @@ function waitEl(sel) {
     });
 }
 
-
-
 function onCharChange(el, cb) {
     if (el) {
         cb(el.textContent.replace(/[^\d]/g, ''));
         //return;
     }
-    new MutationObserver((mutations,observer)=>{
+    new MutationObserver((mutations, observer) => {
         cb(el.textContent.replace(/[^\d]/g, ''));
     }).observe(el, {
         subtree: true,
@@ -141,7 +119,7 @@ function onAttrChange(qid, el, filter, cb) {
         cb(el);
         return;
     }
-    new MutationObserver((mutations,observer)=>{
+    new MutationObserver((mutations, observer) => {
         if (document.querySelector('.question-id').textContent.replace(/[^\d]/g, '') != qid) {
             observer.disconnect();
             observer.takeRecords();
@@ -158,54 +136,162 @@ function onAttrChange(qid, el, filter, cb) {
     });
 }
 
-function makePopups() {
-    popup(ppts[0], ppts[0], 1000, 'green');
-    popup(ppts[1], ppts[1], 1000, 'yellow');
-    popup(ppts[2], ppts[2], 1000, 'red');
+function initSync(auto = false, confirm = false) {
+    akx().then(console.log).catch(console.error);
+    var btn = document.createElement("button");
+    btn.textContent = 'SYNC';
+    btn.onclick = () => {
+        let w = window.open('http://192.168.1.127:8766/sync', "_blank");
+        setTimeout(() => w.close(), 1000);
+    }
+    document.querySelector("#leftNavigator").appendChild(btn);
+    if (auto) {
+        btn.click();
+    }
+    if (confirm) {
+        (confirm("Sync?")) ? btn.click() : null;
+    }
 }
+
+function ambossify(auto = false) {
+    if (!window.ambossController) {
+        var btn = document.createElement("button");
+        btn.textContent = 'AMBOSSIFY';
+        btn.onclick = () => {
+            if (window.ambossController) {
+                window.ambossController.ambossifyCard();
+            } else {
+                document.querySelector('common-content').id = 'qa';
+                var s = document.createElement('script');
+                s.type = "module";
+                s.setAttribute("data-addon", "eyJhbm9uSWQiOiAiNDM2NmVhYjItZDNmNS00NGQ5LTkxZjUtNjA1YmVjNDg2NTNmIiwgInVzZXJJZCI6ICJDM1BXcWtlbDAiLCAidG9rZW4iOiAiZXlKaGJHY2lPaUpTVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmxlSEFpT2pFMk9ETTBPVEExTWpRc0ltbHpjeUk2SWtGTlFrOVRVeUlzSW5OMVlpSTZJa016VUZkeGEyVnNNQ0lzSW1saGRDSTZNVFk0TURnNU9EVXlOSDAuT0JGUnNHYTVNbFF6TUhDOV9jU2djMFlJaWdHaEV6RnJvUnNVaU1MakNKYUxHLVpmQ1N0QTROSjJEN3VqQWgySE1lbHUyWERDODlXb2xuV2VBdmtoRWFmZlFfcUJiMVNDNmJvN0RGNTFXdmNtOUtCY0JJbVcxQzlyNWtTQUF4MzhPTi1oa3pRaGhLbV84aW92MnRraVotRUpCUUpJcG5JSk5CNVZGVUk2Vzd6azh0MmhyYWlWdTVreDFSeWJxbFRCZmtxcHhlMWN5bHRXR21yT1JvR01qaTRDQ0k3MHd5VWwyWUtLLTFBRGh3NkUwNDNGc1p4TXpQUnEtRkJWdmNaLWk1UkFiVHJLemYwTWItZVhOZ2k0Y0d4WE04WGIwRlI3czBfTG42QWF2QWk0NkpEWVlFSXZUOTdYZm9aeTZoQ3VOM2RxZU1oZnhrTFQ4eWRzNlM4NFNRIn0=");
+                s.id = "amboss-snippet";
+                s.onload = () => {
+                    console.log("AMBOSS LOADED");
+                    //setTimeout(() => s.remove(), 1000);
+                }
+                s.src = "https://content-gateway.us.production.amboss.com/amboss.js";
+                document.head.appendChild(s);
+            }
+        }
+        document.querySelector("#leftNavigator").appendChild(btn);
+        if (auto) {
+            btn.click();
+        }
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text);
+}
+
+function initHLs(last = 'highlighter_yellow') {
+    var hb = {};
+    hb.hls = [...document.querySelectorAll("i.fa-circle.fa-stack-1x.fas.highlighter")];
+    hb.hls.forEach(h => {
+        var hn = h.classList.value.match(/highlighter-[a-z]*/g)[0];
+        hb[hn] = {
+            name: hn,
+            short: hn.charAt(12),
+            el: h,
+            color: window.getComputedStyle(h, null).getPropertyValue("color")
+        };
+
+        
+        var btn = document.createElement("button");
+        btn.id = hb[hn].name;
+        btn.textContent = hb[hn].short;
+        btn.style.backgroundColor = hb[hn].color;
+        btn.onclick = () => {
+            window.hlbtns.last = hb[hn];
+            h.click();
+        }
+        hb[hn].btn = btn;
+        document.querySelector("#leftNavigator").appendChild(btn);
+    });
+    window.hlbtns = hb;
+    window.hlbtns.last = window.hlbtns[last];
+
+    document.ontouchstart = (e) => window.getSelection().removeAllRanges();
+    document.ontouchend = (e) => {
+        copyToClipboard(window.getSelection().toString());
+        window.hlbtns.last.btn.click();
+        //document.querySelectorAll("i.fa-circle.fa-stack-1x.fas.highlighter")[0].click();
+        setTimeout(() => window.getSelection().removeAllRanges(), 50);
+    }
+
+}
+
+
+function popup(contents, delay = 1, timeout = 3000, bg = 'white', fnbefore = () => { }, fnafter = () => { }) {
+    if (!window.qpps) {
+        window.qpps = {};
+        window.qpps.active = {};
+        window.qpps.cancelAll = () => {
+            window.qpps.active.forEach(toid => clearTimeout(toid));
+        }
+    }
+    const toid = setTimeout(() => {
+        fnbefore();
+        var d = document.createElement("DIALOG");
+        d.innerHTML = contents;
+        d.style.background = bg;
+        d.addEventListener('close', fnafter);
+        document.body.appendChild(d);
+        d.showModal();
+        setTimeout(() => {
+
+            d.remove();
+            fnafter();
+        }, timeout);
+    }, delay);
+    window.qpps.active.push(toid);
+}
+
+
+function makePopups(qid) {
+    
+    if (document.querySelector('#explanation-container').hasAttribute("hidden")) { //explaination hidden, so make popups!
+        popup("20", 20000, 250, '#01FF70'))
+        ,
+            popup("40", 40000, 250, '#FFDC00'),
+            popup("60...MOVE ON!", 60000, 250, '#F012BE')
+        ];
+    }
+}
+
+
+
+
+
+
 var lastqid = 0;
 waitEl('common-content').then(cc => {
-    cc.id = 'qa';
-    var s = document.createElement('script');
-    s.type = "module";
-    s.setAttribute("data-addon", "eyJhbm9uSWQiOiAiNDM2NmVhYjItZDNmNS00NGQ5LTkxZjUtNjA1YmVjNDg2NTNmIiwgInVzZXJJZCI6ICJDM1BXcWtlbDAiLCAidG9rZW4iOiAiZXlKaGJHY2lPaUpTVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmxlSEFpT2pFMk9ETTBPVEExTWpRc0ltbHpjeUk2SWtGTlFrOVRVeUlzSW5OMVlpSTZJa016VUZkeGEyVnNNQ0lzSW1saGRDSTZNVFk0TURnNU9EVXlOSDAuT0JGUnNHYTVNbFF6TUhDOV9jU2djMFlJaWdHaEV6RnJvUnNVaU1MakNKYUxHLVpmQ1N0QTROSjJEN3VqQWgySE1lbHUyWERDODlXb2xuV2VBdmtoRWFmZlFfcUJiMVNDNmJvN0RGNTFXdmNtOUtCY0JJbVcxQzlyNWtTQUF4MzhPTi1oa3pRaGhLbV84aW92MnRraVotRUpCUUpJcG5JSk5CNVZGVUk2Vzd6azh0MmhyYWlWdTVreDFSeWJxbFRCZmtxcHhlMWN5bHRXR21yT1JvR01qaTRDQ0k3MHd5VWwyWUtLLTFBRGh3NkUwNDNGc1p4TXpQUnEtRkJWdmNaLWk1UkFiVHJLemYwTWItZVhOZ2k0Y0d4WE04WGIwRlI3czBfTG42QWF2QWk0NkpEWVlFSXZUOTdYZm9aeTZoQ3VOM2RxZU1oZnhrTFQ4eWRzNlM4NFNRIn0=");
-    s.id = "amboss-snippet";
-    s.onload = () => {
-        alert("AMBOSS LOADED");
-    }
-    s.src = "https://content-gateway.us.production.amboss.com/amboss.js";
-    document.head.appendChild(s);
-    waitEl('.question-id').then(qel=>{
-        var myCss = addcss(myStyle);
-        document.querySelector('common-content').id = 'qa';
+    var myCss = addcss(myStyle);
+
+    initSync(false, false);
+    initHLs();
+    ambossify(false);
 
 
-        document.ontouchend = (e) => {
-            document.querySelectorAll("i.fa-circle.fa-stack-1x.fas.highlighter")[0].click();
-            setTimeout(() => window.getSelection().removeAllRanges(), 50);
-        }
-        var btn = document.createElement("button");
-        btn.textContent = 'SYNC';
-        btn.onclick = () => { let w = window.open('http://192.168.1.127:8766/sync', "_blank"); setTimeout(() => w.close(), 1000); }
-        document.querySelector("#leftNavigator").appendChild(btn);
-        (confirm("Sync?")) ? btn.click() : null;
-
-        akx().then(console.log).catch(console.error);
-
-        onCharChange(qel, async (qid)=>{
+    waitEl('.question-id').then(qel => {
+        onCharChange(qel, async (qid) => {
             //Question Loaded!
-            makePopups();
+            
+
+            makePopups(qid);
             console.log(qid);
+
             if (qid != lastqid) {
                 //makePopups();
                 window.q = await processQuestion();
                 lastqid = qid;
             }
 
-            onAttrChange(qid, document.querySelector('#explanation-container'), "hidden", (e)=>{
+            onAttrChange(qid, document.querySelector('#explanation-container'), "hidden", (e) => {
                 //Explaination Loaded!
                 console.log('[6.oAc]', e);
-                if (window.ambossController) window.ambossController.ambossifyCard();
+                //if (window.ambossController) window.ambossController.ambossifyCard();
                 //makePopups();
                 //if (document.querySelector("span.question-id")) {
                 //var curr = document.querySelector("span.question-id").textContent.replace(/[^\d]/g, '');
@@ -220,14 +306,14 @@ async function processQuestion() {
     const q = {};
     q.id = document.querySelector("span.question-id").textContent.replace(/[^\d]/g, '');
     q.query = `tag:#AK_Step1_v12::#UWorld::${q.id}`;
-    q.nids = await akx('findNotes', {"query": q.query});
-    q.ninfo = await akx('notesInfo', {"notes": q.nids});
+    q.nids = await akx('findNotes', { "query": q.query });
+    q.ninfo = await akx('notesInfo', { "notes": q.nids });
     q.tags = [...new Set(q.ninfo.flatMap(note => note.tags))];
     q.imgs = {};
 
     async function getImgs(f) {
         var i = [...new Set(q.ninfo.flatMap(note => extractAllText(note.fields[f].value)))].filter(e => e);
-        var p = i.map(img => akx('retrieveMediaFile', {"filename": img}));
+        var p = i.map(img => akx('retrieveMediaFile', { "filename": img }));
         return Promise.all(p).then(data => {
             if (data.filter(d => d).length > 0) { q.imgs[f] = [] }
             data.forEach((d, di) => { if (d) { q.imgs[f].push([i[di], `data:image/png;base64,${d}`]) } });
@@ -243,7 +329,7 @@ async function processQuestion() {
 
     async function addToQueue() {
         var cards = q.ninfo.flatMap(n => n.cards);
-        var destination = ['UW',window.location.pathname.replace('/courseapp/usmle/v12/testinterface/launchtest/9300640/','').split('/')[0]].join('::');
+        var destination = ['UW', window.location.pathname.replace('/courseapp/usmle/v12/testinterface/launchtest/9300640/', '').split('/')[0]].join('::');
         console.log(destination, cards);
     }
 
