@@ -274,6 +274,7 @@ function copyToClipboard(text) {
 
 
 function initHLs(last="highlighter-yellow") {
+    var uw = new UW();
     var hb = {};
     hb.hls = [...document.querySelectorAll("i.fa-circle.fa-stack-1x.fas.highlighter")];
     hb.hls.forEach(h => {
@@ -318,8 +319,9 @@ function initHLs(last="highlighter-yellow") {
         
         //copyToClipboard(window.getSelection().toString());
         window.hlbtns.last.btn.action(e);
+        uw.clearSelection(10);
         //document.querySelectorAll("i.fa-circle.fa-stack-1x.fas.highlighter")[0].click();
-        setTimeout(() => window.getSelection().removeAllRanges(), 50);
+        //setTimeout(() => window.getSelection().removeAllRanges(), 50);
       }
     }
 
