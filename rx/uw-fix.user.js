@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        uw-fix
-// @match       https://apps.uworld.com/courseapp/usmle/v12/testinterface/launchtest/*
+// @match       https://apps.uworld.com/courseapp/usmle/v*/testinterface/launchtest/*
 // @grant       none
 // @version     1.0.7
 // @icon        https://www.google.com/s2/favicons?sz=64&domain=uworld.com
