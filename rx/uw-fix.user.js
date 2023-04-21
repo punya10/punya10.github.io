@@ -31,7 +31,34 @@ dialog::backdrop { background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.4))
 }
 .highlight-color-1 { color: #0000ff !important; }
 .highlight-color-4 { background-color: #ff007f !important; color: #ffff00 !important; }
+.common-content, .left-content, .right-content, .common-content .question-content.split-screen {
+    width: unset !important;
+}
+.left-content, .right-content {
+    flex: 0 0 50%;
+}
+.common-content {
+    flex-direction: column !important;
+}
+.left-content {
+    flex-direction: row !important;
+}
+.vertical-divider-line, .vertical-divider-line .wide-for-mouse-events {
+    width: 100% !important;
+    height: 2px !important;
+}
 `;
+
+
+//document.querySelector('.common-content').style.width = document.querySelector('.left-content').style.width = document.querySelector('.right-content').style.width = document.querySelector('.common-content .question-content.split-screen').style.width = 'unset'
+//document.querySelector('.left-content').style.flex = document.querySelector('.right-content').style.flex = '0 0 50%;'
+//document.querySelector('.common-content').style.flexDirection = 'column';
+//document.querySelector('.left-content').style.flexDirection = 'row';
+//document.querySelector('.vertical-divider-line').style.width = '100%';
+//document.querySelector('.vertical-divider-line').style.height = '2px';
+//document.querySelector('.vertical-divider-line .wide-for-mouse-events').style.width = '100%';
+
+
 
 function addcss(css) {
     var head = document.getElementsByTagName('head')[0];
