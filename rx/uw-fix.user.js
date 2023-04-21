@@ -25,7 +25,12 @@ dialog::backdrop { background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.4))
 }
 .question-content { max-width: 100% !important; }
 #first-explanation > p:last-of-type { padding: 1em; font-size: 1.42691em; background-color: #ff007f; text-indent: -1.0em; padding-left: 2.4em; color: yellow; }
-#first-explanation > p:last-of-type > .textHighlight { color: #0000ff; }
+/*#first-explanation > p:last-of-type > .textHighlight { color: #0000ff; }*/
+.highlighter-pink {
+  color: #ff007f !important;
+}
+.highlight-color-1 { color: #0000ff !important; }
+.highlight-color-4 { background-color: #ff007f !important; color: #ffff00 !important; }
 `;
 
 function addcss(css) {
@@ -99,6 +104,27 @@ function waitEl(sel) {
         });
     });
 }
+
+function waitElUnhide(sel) {
+    return new Promise(resolve => {
+        if (document.querySelector(sel) && !document.querySelector(sel).hasAttribute("hidden")) {
+            resolve(document.querySelector(sel));
+            return;
+        }
+        new MutationObserver((mutations, observer) => {
+            if (document.querySelector(sel) && !document.querySelector(sel).hasAttribute("hidden")) {
+                resolve(document.querySelector(sel));
+                observer.disconnect();
+                observer.takeRecords();
+            }
+        }).observe(document.documentElement, {
+            childList: true,
+            subtree: true
+        });
+    });
+}
+
+
 
 function onCharChange(el, cb) {
     if (el) {
@@ -204,6 +230,8 @@ function initSync(auto = false, confirm = false) {
     var btn = document.createElement("button");
     btn.textContent = 'SYNC';
     btn.style.width = "100%";
+    btn.style.marginTop = "1em";
+    btn.style.marginBottom = "1em";
     btn.onclick = () => {
         let w = window.open('http://192.168.1.127:8766/sync', "_blank");
         setTimeout(() => w.close(), 1000);
@@ -219,8 +247,13 @@ function initSync(auto = false, confirm = false) {
 
 function ambossify(auto = false) {
     if (!window.ambossController) {
-        var btn = document.createElement("button");
-        btn.textContent = 'AMBOSSIFY';
+        var btn = document.querySelector('#AMBOSSIFY') || document.createElement("button");
+        
+        if (!document.querySelector('#AMBOSSIFY')) {
+          btn.textContent = 'AMBOSSIFY';
+        btn.id = "AMBOSSIFY";
+        btn.style.marginTop = "1em";
+        btn.style.marginBottom = "1em";
         btn.onclick = () => {
             if (window.ambossController) {
                 window.ambossController.ambossifyCard();
@@ -239,9 +272,12 @@ function ambossify(auto = false) {
             }
         }
         document.querySelector(lnav).appendChild(btn);
+        }
         if (auto) {
             btn.click();
         }
+    } else {
+      window.ambossController.ambossifyCard();
     }
 }
 
@@ -328,6 +364,7 @@ class Popup {
     create() {
         this.el = document.createElement("DIALOG");
         this.el.innerHTML = this.contents;
+        this.el.style.color = "white";
         this.el.style.background = this.bg;
 
         document.body.appendChild(this.el);
@@ -382,10 +419,23 @@ class Popups {
 function makePopups(qid) {
     window.qpps.cancelAll();
     if (document.querySelector('#explanation-container').hasAttribute("hidden")) { //explaination hidden, so make popups!
-        window.qpps.create({contents: "20", delay:  2000, timeout: 691, bg: '#01FF70'});
-        window.qpps.create({contents: "40", delay: 4000, timeout: 691, bg: '#FFDC00'});
-        window.qpps.create({contents: "60...MOVE ON!", delay: 6000, timeout: 691, bg: '#F012BE'});
+        window.qpps.create({contents: "20", delay:  20000, timeout: 691, bg: '#01FF70'});
+        window.qpps.create({contents: "40", delay: 40000, timeout: 691, bg: '#FFDC00'});
+        window.qpps.create({contents: "60...MOVE ON!", delay: 60000, timeout: 691, bg: '#F012BE'});
     }
+}
+
+
+
+function fixAnsChoices() {
+  const getAns = (a)=>`${a}: '${[...document.querySelectorAll('[id^="answerhighlight"]')][`${a}`.charCodeAt(0) - 65].textContent}'`;
+[...document.querySelectorAll('strong')].filter(c=>c.textContent.startsWith('(Choice')).forEach(c=>{
+    console.log(c.textContent);
+    var str = c.textContent;
+    str.match(/ ([A-Z])/g).forEach(a => {str = str.replace(a, "" + a + ": '" + [...document.querySelectorAll('[id^="answerhighlight"]')][a.charCodeAt(1)-65].textContent + "'")})
+    c.textContent = str;    
+}
+);
 }
 
 
@@ -416,8 +466,16 @@ waitEl('common-content').then(cc => {
                 lastqid = qid;
             }
 
+            waitElUnhide('#explanation-container').then(exp => {
+            	window.qpps.cancelAll();
+                fixAnsChoices();
+                ambossify(true);
+            });
+          
+          
             onAttrChange(qid, document.querySelector('#explanation-container'), "hidden", (e) => {
                 //Explaination Loaded!
+                
                 console.log('[6.oAc]', e);
                 //if (window.ambossController) window.ambossController.ambossifyCard();
                 //makePopups();
@@ -428,3 +486,5 @@ waitEl('common-content').then(cc => {
         })
     });
 });
+
+
