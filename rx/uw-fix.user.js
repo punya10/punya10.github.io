@@ -2,11 +2,11 @@
 // @name        uw-fix
 // @match       https://apps.uworld.com/courseapp/usmle/v*/testinterface/launchtest/*
 // @grant       none
-// @version     1.0.8
+// @version     1.0.9
 // @icon        https://www.google.com/s2/favicons?sz=64&domain=uworld.com
 // @require     http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require     https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js
-// @require     https://punya10.github.io/rx/uwfns.js
+// @require     https://punya10.github.io/rx/uwfns2.js
 // @grant       GM_addStyle
 // @author      Punya Jain
 // @description UWORLD-Anki Cards finder
