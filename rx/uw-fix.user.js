@@ -2,7 +2,7 @@
 // @name        uw-fix
 // @match       https://apps.uworld.com/courseapp/usmle/v12/testinterface/launchtest/*
 // @grant       none
-// @version     1.0.5
+// @version     1.0.6
 // @icon        https://www.google.com/s2/favicons?sz=64&domain=uworld.com
 // @require     http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require     https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js
@@ -34,8 +34,11 @@ dialog::backdrop { background: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.4))
 .common-content, .left-content, .right-content, .common-content .question-content.split-screen {
     width: unset !important;
 }
-.left-content, .right-content {
-    flex: 0 0 50%;
+.left-content {
+    flex: 0 0 31%;
+}
+.right-content {
+    flex: 0 0 69%;
 }
 .common-content {
     flex-direction: column !important;
@@ -455,7 +458,7 @@ function makePopups(qid) {
 
 
 function fixAnsChoices() {
-  const getAns = (a)=>`${a}: '${[...document.querySelectorAll('[id^="answerhighlight"]')][`${a}`.charCodeAt(0) - 65].textContent}'`;
+  //const getAns = (a)=>`${a}: '${[...document.querySelectorAll('[id^="answerhighlight"]')][`${a}`.charCodeAt(0) - 65].textContent}'`;
 [...document.querySelectorAll('strong')].filter(c=>c.textContent.startsWith('(Choice')).forEach(c=>{
     console.log(c.textContent);
     var str = c.textContent;
@@ -494,6 +497,7 @@ waitEl('common-content').then(cc => {
             }
 
             waitElUnhide('#explanation-container').then(exp => {
+                console.log('EXPL showing, exp')
             	window.qpps.cancelAll();
                 fixAnsChoices();
                 ambossify(true);
