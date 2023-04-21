@@ -2,7 +2,7 @@
 // @name        uw-fix
 // @match       https://apps.uworld.com/courseapp/usmle/v12/testinterface/launchtest/*
 // @grant       none
-// @version     1.0.6
+// @version     1.0.7
 // @icon        https://www.google.com/s2/favicons?sz=64&domain=uworld.com
 // @require     http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require     https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js
