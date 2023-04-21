@@ -1,5 +1,5 @@
 class UW {
-    alert = true;
+    alert = false;
     constructor() {
       this.test = "hello";
       this.log(this.test);
