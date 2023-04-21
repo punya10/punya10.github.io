@@ -1,12 +1,12 @@
 class UW {
-    alert = false;
+    //alert = false;
     constructor() {
       this.test = "hello";
       this.log(this.test);
     }
     log(...args) {
         console.log(...args);
-        if (this.alert) window.alert(args);
+        //if (this.alert) window.alert(args);
     }
     clearSelection(delay = 0) {
         setTimeout(() => {window.getSelection ? window.getSelection().empty ? window.getSelection().empty() : window.getSelection().removeAllRanges && window.getSelection().removeAllRanges() : document.selection && document.selection.empty()}, delay);
