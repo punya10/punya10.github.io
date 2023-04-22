@@ -235,7 +235,17 @@ function copyToClipboard(text) {
 
 
 function initHLs(last = "highlighter-yellow") {
-    
+    function lastHl(color = last) {
+        if (!color.startsWith("highlighter-")) {
+            color = window.hlbtns.colors[Math.floor(Math.random() * window.hlbtns.colors.length)];
+        }
+        window.hlbtns.last = window.hlbtns[color];
+        window.hlbtns.colors.forEach(c => {
+            window.hlbtns[c].btn.style.border = 'none';
+        })
+        window.hlbtns[color].btn.style.border = '1px solid black';
+        window.hlbtns.lastTs = new Date().now();
+    }
     var hb = {};
     hb.hls = [...document.querySelectorAll("i.fa-circle.fa-stack-1x.fas.highlighter")];
     hb.hls.forEach(h => {
@@ -258,7 +268,8 @@ function initHLs(last = "highlighter-yellow") {
         hb[hn].btn.action = (e) => {
             //if (hb[hn].btn.contains(e.target)) {
             console.log("Clicked ME correctly", e);
-            window.hlbtns.last = hb[hn];
+            lastHl(hn);
+            //window.hlbtns.last = hb[hn];
             console.log("clicked", hb[hn], window.hlbtns.last);
             h.click();
             //}
@@ -270,14 +281,18 @@ function initHLs(last = "highlighter-yellow") {
         document.querySelector(lnav).appendChild(hb[hn].btn);
     });
     window.hlbtns = hb;
-    window.hlbtns.last = window.hlbtns[last];
+    window.hlbtns.colors = Object.keys(window.hlbtns).filter(k => k.startsWith("highlighter-"));
+    lastHl(last);
+    //window.hlbtns.last = window.hlbtns[last];
+    
 
-
-    document.querySelector("common-content").parentNode.ontouchstart = (e) => window.getSelection().removeAllRanges();
+    document.querySelector("common-content").parentNode.ontouchstart = (e) => uw.clearSelection(0);
     document.querySelector("common-content").parentNode.ontouchend = (e) => {
         var curStr = window.getSelection().toString();
         if (curStr.length > 0) {
-
+            if (((new Date().now()) - window.hlbtns.lastTs) > 10000) {
+                lastHl('rand');
+            }
             //copyToClipboard(window.getSelection().toString());
             window.hlbtns.last.btn.action(e);
             uw.clearSelection(10);
