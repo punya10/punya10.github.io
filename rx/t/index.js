@@ -1495,8 +1495,8 @@ function loop() {
 
 	let bg = getColor(percent);	
 
-	//ctx.fillStyle = accents[theme][themeAccent]["--bgcolor"];
-	ctx.fillStyle = bg;
+	ctx.fillStyle = accents[theme][themeAccent]["--bgcolor"];
+	//ctx.fillStyle = bg;
 	ctx.fillRect(0, 0, 400, 400);
 
 	ctx.fillStyle = accents[theme][themeAccent]["--color"];
@@ -1520,12 +1520,14 @@ function loop() {
 	ctx.fillText(fullname[roundInfo.current].toUpperCase(), 200, 260, 280);
 
 	ctx.strokeStyle = accents[theme][themeAccent]["--coloraccent"];
+	ctx.strokeStyle = bg;
 	ctx.lineWidth = 4;
 	ctx.beginPath();
 	ctx.arc(200, 200, 180, 0, Math.PI * 2);
 	ctx.stroke();
 
 	ctx.strokeStyle = themes[theme].props["--" + roundInfo.current];
+	ctx.strokeStyle = bg;
 	ctx.lineWidth = 16;
 	ctx.beginPath();
 	ctx.arc(200, 200, 180, -Math.PI / 2, (1 - roundInfo.t / config[roundInfo.current]) * Math.PI * 2 - Math.PI / 2);
