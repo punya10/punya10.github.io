@@ -1599,6 +1599,7 @@ if ('documentPictureInPicture' in window) {
 		document.body.appendChild(video);
 		document.body.appendChild(canvas);
 		canvas.id = "canvas";
+		canvas.webkitSetPresentationMode("picture-in-picture");
 		let stream = canvas.captureStream();
 		video.srcObject = stream;
 		video.autoplay = false;
