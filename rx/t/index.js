@@ -117,6 +117,7 @@ function nextRound() {
 
 	timer.className = "t-" + roundInfo.current;
 	roundInfo.t = 0;
+	sayQuote();
 	setTime();
 	if (roundInfo.running) {
 		if (roundInfo.current === "focus" && audioType === "noise") {
@@ -339,6 +340,14 @@ function fadeIn() {
 }
 
 //#endregion
+
+let q = new SpeechSynthesisUtterance();
+q.text = "Move On!"
+const quotes = ["82 82 82 82 82. You Got This. Saying It Again, 82. Go!", "Almost There", "Believe you can and you’re halfway there", "Disneyland!", "Do You Want To Go See Your Friends?", "Do You Want To Go To Disneyland?", "Do You Want To Go To EDC?", "Do You Want To Go To LA?", "Do You Want To Go To Vegas?", "Don’t wait. The time will never be just right", "EDC! EDC! EDC! EDC! Let's go to EDC!", "Every accomplishment starts with the decision to try", "Every moment is a fresh beginning", "Finish Up!", "Happiness is not by chance, but by choice", "Hurry Along!", "If things go wrong, don’t go with them", "If you can dream it, you can do it", "Imagine how good life could be if only you did what needed to be done!", "Just A Little More", "Keep Going", "Keep It Super Simple", "LA!", "Let's Get This Done!", "Let's Go!", "Life is like riding a bicycle. To keep your balance, you must keep moving", "Look Straight Ahead 82", "Move On", "Nothing is impossible. The word itself says “I’m possible!\"", "Problems are not stop signs, they are guidelines.", "Quickly Now", "Simplicity is the ultimate sophistication", "Success is not final, failure is not fatal: it is the courage to continue that counts", "Thank you, Next!", "There is no substitute for hard work", "Vegas!", "You Can Do It!", "You can’t cross the sea merely by standing and staring at the water", "You Got This!", "You Rock!"];
+function sayQuote() {
+	q.text = quotes[Math.floor(Math.random()*quotes.length)];
+	window.speechSynthesis.speak(q);
+}
 
 //#region Current View
 
