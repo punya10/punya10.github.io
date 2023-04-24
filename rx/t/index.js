@@ -1603,8 +1603,8 @@ if ('documentPictureInPicture' in window) {
 		let stream = canvas.captureStream();
 		video.srcObject = stream;
 		video.autoplay = false;
-		//video.controls = true;
-		video.controls = false;
+		video.controls = true;
+		//video.controls = false;
 		video.addEventListener("play", () => {
 			if (!roundInfo.running) pauseplay();
 		});
