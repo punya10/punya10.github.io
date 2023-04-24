@@ -34,8 +34,8 @@ let pipActive = false;
 
 const fullname = {
 	focus: "Focus",
-	short: "Short Break",
-	long: "Long Break",
+	short: "Keep Going",
+	long: "You got this!",
 };
 
 let viewState = "timer";
@@ -1474,19 +1474,36 @@ document.getElementById("rounds-dec").addEventListener("click", () => {
 
 //#endregion
 
+
+function getColor(value){
+    //value from 0 to 1
+    var hue=((1-value)*120).toString(10);
+    return ["hsl(",hue,",100%,50%)"].join("");
+}
+
+
+
 //#region PIP Mode
 let canvas = document.createElement("canvas");
 canvas.width = canvas.height = 400;
 let ctx = canvas.getContext("2d");
 
 function loop() {
-	ctx.fillStyle = accents[theme][themeAccent]["--bgcolor"];
+
+	let seconds = config[roundInfo.current] - roundInfo.t;
+	let percent = roundInfo.t / config[roundInfo.current];
+
+	let bg = getColor(percent);	
+
+	//ctx.fillStyle = accents[theme][themeAccent]["--bgcolor"];
+	ctx.fillStyle = bg;
 	ctx.fillRect(0, 0, 400, 400);
 
 	ctx.fillStyle = accents[theme][themeAccent]["--color"];
 	ctx.font = "80px monospace";
 	ctx.textAlign = "center";
-	let seconds = config[roundInfo.current] - roundInfo.t;
+
+
 	if (seconds < 0) {
 		nextRound();
 		return;
