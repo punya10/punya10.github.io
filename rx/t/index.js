@@ -149,6 +149,7 @@ function pauseplay() {
 		if (roundInfo.current === "focus" && audioType === "noise") {
 			fadeIn();
 		}
+		sayQuote();
 		timerWorker.postMessage({
 			type: "start",
 			t: roundInfo.t,
@@ -1607,6 +1608,13 @@ if ('documentPictureInPicture' in window) {
 		});
 		video.addEventListener("pause", () => {
 			if (roundInfo.running) pauseplay();
+		});
+		video.addEventListener("seeked", () => {
+			//if (roundInfo.running) pauseplay();
+			alert('seek   END: ' + video.currentTime)
+		});
+		video.addEventListener("seeking", () => {
+			alert('seek BEGIN: ' + video.currentTime)
 		});
 		loop();
 
