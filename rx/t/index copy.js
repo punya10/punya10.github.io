@@ -4,7 +4,6 @@ if ("serviceWorker" in navigator) {
 
 let timerWorker = new Worker("./worker.js");
 
-let root = document.documentElement;
 
 let mainel = document.getElementById("main");
 let statisticsDiv = document.getElementById("statistics");
@@ -32,122 +31,28 @@ let colorsDiv = document.getElementById("colors");
 
 let pipActive = false;
 
-
+const fullname = {
+	focus: "Focus",
+	short: "Keep Going",
+	long: "You got this!",
+};
 
 let viewState = "timer";
+
 
 let audioType = "";
 
 const audioTypes = ["noise"];
 
-let roundInfo = {
-	t: 0,
-	focusNum: 1,
-	current: "focus",
-	running: false,
-};
 
 //#region Time
 
-function setTime() {
-	let seconds = config[roundInfo.current] - roundInfo.t;
-	if (seconds < 0) {
-		nextRound();
-		return;
-	}
-	let timestr =
-		Math.floor(seconds / 60)
-			.toString()
-			.padStart(2, "0") +
-		":" +
-		(seconds % 60).toString().padStart(2, "0");
-	timediv.innerText = timestr;
-	document.title = `${timestr} ${fullname[roundInfo.current]} - Tomodoro`;
-	progress.style.strokeDashoffset = (roundInfo.t / config[roundInfo.current]) * 100;
-	if (pipActive) loop();
-}
 
-timerWorker.addEventListener("message", (e) => {
-	roundInfo.t = e.data.t;
-	setTime();
-	if (!e.data.running) {
-		timer.style.setProperty("--progress", "0");
-		nextRound();
-	}
-});
 
 //#endregion
 
 //#region Timer Actions
 
-function nextRound() {
-	let finished = fullname[roundInfo.current];
-	let body = "Begin ";
-	if (roundInfo.current === "focus") {
-		if (audioType === "noise") {
-			fadeOut();
-		}
-		focusEnd(roundInfo.t);
-		finished += " Round";
-		if (roundInfo.focusNum >= config.longGap) {
-			roundInfo.current = "long";
-			roundInfo.focusNum = 0;
-		} else {
-			roundInfo.current = "short";
-		}
-		body += "a " + Math.floor(config[roundInfo.current] / 60) + " minute " + fullname[roundInfo.current];
-	} else {
-		roundInfo.current = "focus";
-		roundInfo.focusNum++;
-		roundnoDiv.innerText = roundInfo.focusNum + "/" + config.longGap;
-		body += "focusing for " + Math.floor(config.focus / 60) + " minutes";
-	}
-
-	timer.className = "t-" + roundInfo.current;
-	roundInfo.t = 0;
-	sayQuote();
-	setTime();
-	if (roundInfo.running) {
-		if (roundInfo.current === "focus" && audioType === "noise") {
-			fadeIn();
-		}
-		timerWorker.postMessage({
-			type: "start",
-			maxDuration: config[roundInfo.current],
-		});
-	}
-	notify(`${finished} Complete`, body);
-}
-
-function pauseplay() {
-	if (roundInfo.current === "none") {
-		nextRound();
-		pauseplaybtn.className = "playing";
-		return;
-	}
-	if (roundInfo.running) {
-		if (roundInfo.current === "focus" && audioType === "noise") {
-			fadeOut();
-		}
-		timerWorker.postMessage({ type: "stop" });
-		roundInfo.running = false;
-		pauseplaybtn.title = "Start Timer";
-		pauseplaybtn.className = "paused";
-	} else {
-		if (roundInfo.current === "focus" && audioType === "noise") {
-			fadeIn();
-		}
-		sayQuote();
-		timerWorker.postMessage({
-			type: "start",
-			t: roundInfo.t,
-			maxDuration: config[roundInfo.current],
-		});
-		roundInfo.running = true;
-		pauseplaybtn.title = "Pause Timer";
-		pauseplaybtn.className = "playing";
-	}
-}
 
 pauseplaybtn.addEventListener("click", pauseplay);
 
@@ -330,7 +235,13 @@ function fadeIn() {
 
 //#endregion
 
-
+let q = new SpeechSynthesisUtterance();
+q.text = "Move On!"
+const quotes = ["82 82 82 82 82. You Got This. Saying It Again, 82. Go!", "Almost There", "Believe you can and you’re halfway there", "Disneyland!", "Do You Want To Go See Your Friends?", "Do You Want To Go To Disneyland?", "Do You Want To Go To EDC?", "Do You Want To Go To LA?", "Do You Want To Go To Vegas?", "Don’t wait. The time will never be just right", "EDC! EDC! EDC! EDC! Let's go to EDC!", "Every accomplishment starts with the decision to try", "Every moment is a fresh beginning", "Finish Up!", "Happiness is not by chance, but by choice", "Hurry Along!", "If things go wrong, don’t go with them", "If you can dream it, you can do it", "Imagine how good life could be if only you did what needed to be done!", "Just A Little More", "Keep Going", "Keep It Super Simple", "LA!", "Let's Get This Done!", "Let's Go!", "Life is like riding a bicycle. To keep your balance, you must keep moving", "Look Straight Ahead 82", "Move On", "Nothing is impossible. The word itself says “I’m possible!\"", "Problems are not stop signs, they are guidelines.", "Quickly Now", "Simplicity is the ultimate sophistication", "Success is not final, failure is not fatal: it is the courage to continue that counts", "Thank you, Next!", "There is no substitute for hard work", "Vegas!", "You Can Do It!", "You can’t cross the sea merely by standing and staring at the water", "You Got This!", "You Rock!"];
+function sayQuote() {
+	q.text = quotes[Math.floor(Math.random()*quotes.length)];
+	window.speechSynthesis.speak(q);
+}
 
 //#region Current View
 
@@ -535,17 +446,7 @@ function saveTasks() {
 	localStorage.setItem("pomo-tasks", JSON.stringify(tasks));
 }
 
-function focusEnd(t) {
-	let minutes = Math.round(t / 60);
-	if (minutes <= 0) return;
-	if (tasks.includes(selectedTask)) {
-		saveRecord({
-			t: minutes,
-			d: Date.now(),
-			n: selectedTask,
-		});
-	}
-}
+
 
 document.getElementById("create-backup").addEventListener("click", () => {
 	let tr = db.transaction("records", "readonly").objectStore("records").index("task").getAll();
@@ -1083,280 +984,6 @@ function hmstrFull(t) {
 
 //#region Theming
 
-const themes = {
-	dark: {
-		props: {
-			"color-scheme": "dark",
-			"--focus": "#d64f4f",
-			"--short": "#26baba",
-			"--long": "#5fbbe6",
-		},
-		defaccent: "lavender",
-	},
-	light: {
-		props: {
-			"color-scheme": "light",
-			"--focus": "#d64f4f",
-			"--short": "#26baba",
-			"--long": "#5fbbe6",
-		},
-		defaccent: "red",
-	},
-	black: {
-		props: {
-			"color-scheme": "dark",
-			"--focus": "#d64f4f",
-			"--short": "#26baba",
-			"--long": "#5fbbe6",
-		},
-		defaccent: "lavender",
-	},
-	white: {
-		props: {
-			"color-scheme": "light",
-			"--focus": "#d64f4f",
-			"--short": "#26baba",
-			"--long": "#5fbbe6",
-		},
-		defaccent: "red",
-	},
-};
-
-const accents = {
-	dark: {
-		red: {
-			"--bgcolor": "#252222",
-			"--bgcolor2": "#403333",
-			"--color": "#ffeeee",
-			"--coloraccent": "#ffaaaa",
-		},
-		violet: {
-			"--bgcolor": "#252225",
-			"--bgcolor2": "#3a2a3a",
-			"--color": "#ffeeff",
-			"--coloraccent": "#ee82ee",
-		},
-		blue: {
-			"--bgcolor": "#131320",
-			"--bgcolor2": "#1d3752",
-			"--color": "#eeeeff",
-			"--coloraccent": "#9bb2ff",
-		},
-		lavender: {
-			"--bgcolor": "#222230",
-			"--bgcolor2": "#333340",
-			"--color": "#eeeeff",
-			"--coloraccent": "#b2b2ff",
-		},
-		green: {
-			"--bgcolor": "#1d201d",
-			"--bgcolor2": "#143814",
-			"--color": "#eeffee",
-			"--coloraccent": "#8dd48d",
-		},
-		teal: {
-			"--bgcolor": "#111f1f",
-			"--bgcolor2": "#334040",
-			"--color": "#eeffff",
-			"--coloraccent": "#00aaaa",
-		},
-		grey: {
-			"--bgcolor": "#222222",
-			"--bgcolor2": "#444444",
-			"--color": "#dddddd",
-			"--coloraccent": "#aaaaaa",
-		},
-	},
-	black: {
-		red: {
-			"--bgcolor2": "#403333",
-			"--color": "#ffeeee",
-			"--coloraccent": "#ffaaaa",
-			"--bgcolor": "#000000",
-		},
-		violet: {
-			"--bgcolor": "#000000",
-			"--bgcolor2": "#312131",
-			"--color": "#ffeeff",
-			"--coloraccent": "#ee82ee",
-		},
-		blue: {
-			"--bgcolor2": "#1d3752",
-			"--color": "#eeeeff",
-			"--coloraccent": "#9bb2ff",
-			"--bgcolor": "#000000",
-		},
-		lavender: {
-			"--bgcolor2": "#333340",
-			"--color": "#eeeeff",
-			"--coloraccent": "#b2b2ff",
-			"--bgcolor": "#000000",
-		},
-		green: {
-			"--bgcolor2": "#143814",
-			"--color": "#eeffee",
-			"--coloraccent": "#8dd48d",
-			"--bgcolor": "#000000",
-		},
-		teal: {
-			"--bgcolor": "#000000",
-			"--bgcolor2": "#303f3f",
-			"--color": "#eeffff",
-			"--coloraccent": "#00aaaa",
-		},
-		grey: {
-			"--bgcolor2": "#444444",
-			"--color": "#dddddd",
-			"--coloraccent": "#aaaaaa",
-			"--bgcolor": "#000000",
-		},
-	},
-	light: {
-		red: {
-			"--bgcolor": "#fff3f3",
-			"--bgcolor2": "#ffd2d2",
-			"--color": "#222222",
-			"--coloraccent": "#d64f4f",
-		},
-		violet: {
-			"--bgcolor": "#fff3ff",
-			"--bgcolor2": "#ffd2ff",
-			"--color": "#222222",
-			"--coloraccent": "#ee82ee",
-		},
-		blue: {
-			"--bgcolor": "#f3f3ff",
-			"--bgcolor2": "#d2d2ff",
-			"--color": "#222222",
-			"--coloraccent": "#4169e4",
-		},
-		lavender: {
-			"--bgcolor": "#faf1ff",
-			"--bgcolor2": "#e2d4ff",
-			"--color": "#222222",
-			"--coloraccent": "#8b51ff",
-		},
-		teal: {
-			"--bgcolor": "#faffff",
-			"--bgcolor2": "#cbebeb",
-			"--color": "#222222",
-			"--coloraccent": "#008080",
-		},
-		green: {
-			"--bgcolor": "#f3fff3",
-			"--bgcolor2": "#cafcc1",
-			"--color": "#222222",
-			"--coloraccent": "#39743d",
-		},
-		grey: {
-			"--bgcolor": "#ffffff",
-			"--bgcolor2": "#dddddd",
-			"--color": "#333333",
-			"--coloraccent": "#555555",
-		},
-	},
-	white: {
-		red: {
-			"--bgcolor": "#ffffff",
-			"--bgcolor2": "#ffd2d2",
-			"--color": "#222222",
-			"--coloraccent": "#ee7777",
-		},
-		violet: {
-			"--bgcolor": "#ffffff",
-			"--bgcolor2": "#ffd2ff",
-			"--color": "#222222",
-			"--coloraccent": "#ee82ee",
-		},
-		blue: {
-			"--bgcolor": "#ffffff",
-			"--bgcolor2": "#d2d2ff",
-			"--color": "#222222",
-			"--coloraccent": "#4169e4",
-		},
-		lavender: {
-			"--bgcolor": "#ffffff",
-			"--bgcolor2": "#e2d4ff",
-			"--color": "#222222",
-			"--coloraccent": "#8b51ff",
-		},
-		teal: {
-			"--bgcolor": "#ffffff",
-			"--bgcolor2": "#cbebeb",
-			"--color": "#222222",
-			"--coloraccent": "#008080",
-		},
-		green: {
-			"--bgcolor": "#ffffff",
-			"--bgcolor2": "#cafcc1",
-			"--color": "#222222",
-			"--coloraccent": "#39743d",
-		},
-		grey: {
-			"--bgcolor": "#ffffff",
-			"--bgcolor2": "#dddddd",
-			"--color": "#333333",
-			"--coloraccent": "#555555",
-		},
-	},
-};
-
-let theme = "dark";
-let themeAccent = "lavender";
-
-function setTheme(basetheme = "dark", accent) {
-	if (!accent) accent = themes[basetheme].defaccent;
-	if (basetheme !== "custom") {
-		for (let prop in themes[basetheme].props) {
-			root.style.setProperty(prop, themes[basetheme].props[prop]);
-		}
-		document.getElementById("t-" + theme).removeAttribute("selected");
-		addColorButtons(basetheme);
-		document.getElementById("t-" + basetheme).setAttribute("selected", true);
-		setAccent(basetheme, accent);
-	}
-}
-
-let colorBtns = [];
-
-function addColorButtons(basetheme) {
-	colorsDiv.innerHTML = "";
-	colorBtns = [];
-	for (let accent in accents[basetheme]) {
-		let btn = document.createElement("button");
-		btn.className = "color";
-		btn.style.backgroundColor = accents[basetheme][accent]["--coloraccent"];
-		btn.dataset.color = basetheme + "-" + accent;
-		btn.addEventListener("click", () => {
-			setAccent(basetheme, accent);
-		});
-		btn.title = accent;
-		colorBtns.push(btn);
-		colorsDiv.appendChild(btn);
-	}
-}
-
-let themeMeta = document.getElementById("theme-meta");
-
-function setAccent(basetheme, accent) {
-	for (let prop in accents[basetheme][accent]) {
-		root.style.setProperty(prop, accents[basetheme][accent][prop]);
-	}
-	themeMeta.setAttribute("content", accents[basetheme][accent]["--bgcolor"]);
-	colorBtns.forEach((btn) => {
-		if (btn.dataset.active === "true") {
-			btn.dataset.active = "false";
-		}
-		if (btn.dataset.color === basetheme + "-" + accent) {
-			btn.dataset.active = "true";
-		}
-	});
-
-	localStorage.setItem("pomo-theme", basetheme);
-	localStorage.setItem("pomo-theme-accent", accent);
-	theme = basetheme;
-	themeAccent = accent;
-}
 
 document.getElementById("theme-select").addEventListener("change", function () {
 	setTheme(this.value);
@@ -1368,7 +995,7 @@ if (localStorage.getItem("pomo-theme")) {
 		themeAccent = localStorage.getItem("pomo-theme-accent");
 	}
 }
-setTheme(theme, themeAccent);
+
 
 //#endregion
 
@@ -1467,11 +1094,18 @@ document.getElementById("rounds-dec").addEventListener("click", () => {
 //#endregion
 
 
+function getColor(value){
+    //value from 0 to 1
+    var hue=((1-value)*120).toString(10);
+    return ["hsl(",hue,",100%,50%)"].join("");
+}
 
 
 
 //#region PIP Mode
-
+let canvas = document.createElement("canvas");
+canvas.width = canvas.height = 400;
+let ctx = canvas.getContext("2d");
 
 function loop() {
 
@@ -1502,7 +1136,7 @@ function loop() {
 	ctx.fillText(timestr, 200, 200, 280);
 
 	ctx.font = "32px monospace";
-	ctx.fillText(roundInfo.focusNum || fullname[roundInfo.current].toUpperCase(), 200, 260, 280);
+	ctx.fillText(fullname[roundInfo.current].toUpperCase(), 200, 260, 280);
 
 	ctx.strokeStyle = accents[theme][themeAccent]["--coloraccent"];
 	ctx.strokeStyle = bg;
@@ -1520,53 +1154,7 @@ function loop() {
 }
 
 if ('documentPictureInPicture' in window) {
-	let timerContainer = null;
-	let pipWindow = null;
-
-	async function enterPiP() {
-		const timer = document.querySelector("#timer");
-		timerContainer = timer.parentNode;
-		timerContainer.classList.add("pip");
-
-		const pipOptions = {
-			initialAspectRatio: timer.clientWidth / timer.clientHeight,
-			lockAspectRatio: true,
-			copyStyleSheets: true,
-		};
-
-		pipWindow = await documentPictureInPicture.requestWindow(pipOptions);
-
-		// Add timer to the PiP window.
-		pipWindow.document.body.append(timer);
-
-		// Listen for the PiP closing event to put the timer back.
-		pipWindow.addEventListener("unload", onLeavePiP.bind(pipWindow), {
-			once: true,
-		});
-	}
-
-	// Called when the PiP window has closed.
-	function onLeavePiP() {
-		if (this !== pipWindow) {
-			return;
-		}
-
-		// Add the timer back to the main window.
-		const timer = pipWindow.document.querySelector("#timer");
-		timerContainer.append(timer);
-		timerContainer.classList.remove("pip");
-		pipWindow.close();
-
-		pipWindow = null;
-		timerContainer = null;
-	}
-	document.getElementById("popupbtn").addEventListener("click", () => {
-		if (!pipWindow) {
-			enterPiP();
-		} else {
-			onLeavePiP.bind(pipWindow)();
-		}
-	});
+	
 } else {
 	let video = document.createElement("video");
 
