@@ -1665,7 +1665,7 @@ if ('documentPictureInPicture' in window) {
 
 let versionNo = 1;
 
-let savedNo = parseInt(localStorage.getItem("pomo-version"));
+let savedNo; //= parseInt(localStorage.getItem("pomo-version"));
 
 if (!savedNo) {
 	if (localStorage.getItem("pomo-notfirstload")) {
