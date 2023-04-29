@@ -153,6 +153,28 @@ var remote = [
     metaKey: false,
   },
   {
+    key: "y",
+    code: "KeyY",
+    keyCode: 89,
+    charCode: 0,
+    which: 89,
+    altKey: false,
+    ctrlKey: false,
+    shiftKey: false,
+    metaKey: false,
+  },
+  {
+    key: "t",
+    code: "KeyT",
+    keyCode: 84,
+    charCode: 0,
+    which: 84,
+    altKey: false,
+    ctrlKey: false,
+    shiftKey: false,
+    metaKey: false,
+  },
+  {
     key: "h",
     code: "KeyH",
     keyCode: 72,
@@ -356,7 +378,6 @@ keyState[2].action = "C";
 keyState[3].action = "D";
 keyState[4].action = "E";
 keyState[5].action = "F";
-keyState[6].action = "M";
 
 /*
 
