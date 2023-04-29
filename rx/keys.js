@@ -44,25 +44,38 @@ var keyState = downKeys.map((element, index) => { return { down: element, up: up
 log(keyState);
 
 let evt = {'key': 'l'};
-log(downKeys.indexOf(evt.key));
+//log(downKeys.indexOf(evt.key));
 
 //window.addEventListener("keydown", (evt) => {
     //if (downKeys.includes(k/*evt.key*/)) {
     if (downKeys.includes(evt.key)) {
-        log(evt.key);
         let index = downKeys.indexOf(evt.key);
+        log(index, evt.key);
         keyState[index].isPressed = true;
         keyState[index].timestamp = performance.now();
         log(keyState[index]);
-        //let upKey = upKeys[index];
-        //log(upKey);
-        //let upEvent = new KeyboardEvent("keyup", { key: upKey });
-        //window.dispatchEvent(upEvent);
     }
 //});
 
+evt = {'key': 'v'};
+//log(upKeys.indexOf(evt.key));
 
-//log(keyState);
+//window.addEventListener("keydown", (evt) => {
+    //if (downKeys.includes(k/*evt.key*/)) {
+        if (upKeys.includes(evt.key)) {
+            
+            let index = upKeys.indexOf(evt.key);
+            log(index, evt.key);
+            keyState[index].isPressed = true;
+            keyState[index].timestamp = performance.now();
+            log(keyState[index]);
+        }
+    //});
+
+
+
+
+log(keyState);
 //uworld answers = document.querySelectorAll("label.mat-radio-label")[0].click();
 // [...document.querySelectorAll('[id^="answerhighlight"]')]
 
