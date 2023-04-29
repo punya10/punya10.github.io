@@ -17,7 +17,7 @@ OUT.addEventListener("click", (evt) => {
     downloadObjectAsJson(codes, "keys");
 });*/
 function log(...arg) {
-    OUT.innerHTML += `<pre>${arg}</pre>`;
+    OUT.innerHTML += `<pre>${JSON.stringify(arg,null,2)}</pre>`;
 }
 function downloadObjectAsJson(exportObj, exportName){
     var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
