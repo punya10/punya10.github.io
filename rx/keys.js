@@ -360,10 +360,10 @@ let rUp = remote.filter((element, index) => {
 });
 
 let downKeys = rDown.map((element) => {
-  return element.key;
+  return element.code;
 });
 let upKeys = rUp.map((element) => {
-  return element.key;
+  return element.code;
 });
 
 //log(rDown, rUp);
@@ -385,7 +385,7 @@ keyState[5].action = "F";
 
 log(keyState);
 
-let evt = { key: "l" };
+let evt = { code: "KeyL" };
 //log(downKeys.indexOf(evt.key));
 
 //window.addEventListener("keydown", (evt) => {
