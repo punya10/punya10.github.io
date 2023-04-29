@@ -52,7 +52,7 @@ let evt = {'key': 'l'};
         let index = downKeys.indexOf(evt.key);
         log(index, evt.key);
         keyState[index].isPressed = true;
-        keyState[index].timestamp = performance.now();
+        keyState[index].tsPressed = performance.now();
         log(keyState[index]);
     }
 //});
@@ -62,12 +62,21 @@ evt = {'key': 'v'};
 
 //window.addEventListener("keydown", (evt) => {
     //if (downKeys.includes(k/*evt.key*/)) {
+        var pressed = keyState.find((element) => { return element.isPressed === true })
+        if (pressed && pressed.up === evt.key) {
+            
+            pressed.tsElapsed = performance.now() - pressed.tsPressed;
+            pressed.isPressed = false;
+            log("pressed",pressed);
+        } else {
+            log("SKIP! not pressed, something else");
+        }
         if (upKeys.includes(evt.key)) {
             
             let index = upKeys.indexOf(evt.key);
             log(index, evt.key);
             keyState[index].isPressed = true;
-            keyState[index].timestamp = performance.now();
+            //keyState[index].timestamp = performance.now();
             log(keyState[index]);
         }
     //});
