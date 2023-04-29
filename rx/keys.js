@@ -38,8 +38,9 @@ let downKeys = rDown.map((element) => { return element.key });
 let upKeys = rUp.map((element) => { return element.key });
 
 //log(rDown, rUp);
-log(downKeys, upKeys);
-
+//log(downKeys, upKeys);
+var keyPairs = downKeys.map((element, index) => { return { down: element, up: upKeys[index] } });
+log(keyPairs);
 
 //window.addEventListener("keydown", (evt) => {
 //});
