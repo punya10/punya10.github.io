@@ -36,3 +36,6 @@ let rUp = remote.filter((element, index) => { return index % 2 === 1 });
 
 log(rDown,rUp);
 
+
+//uworld answers [...document.querySelectorAll('[id^="answerhighlight"]')]
+
