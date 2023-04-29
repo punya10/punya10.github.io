@@ -17,7 +17,7 @@ OUT.addEventListener("click", (evt) => {
     downloadObjectAsJson(codes, "keys");
 });*/
 function log(...arg) {
-    OUT.innerHTML += `<pre>${JSON.stringify(arg, null, 2)}</pre>`;
+    OUT.innerHTML += `<pre>${JSON.stringify(...arg, null, 2)}</pre>`;
 }
 function downloadObjectAsJson(exportObj, exportName) {
     var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
@@ -39,13 +39,27 @@ let upKeys = rUp.map((element) => { return element.key });
 
 //log(rDown, rUp);
 //log(downKeys, upKeys);
-var keyPairs = downKeys.map((element, index) => { return { down: element, up: upKeys[index] } });
-log(keyPairs);
-
-//window.addEventListener("keydown", (evt) => {
-//});
+var keyState = downKeys.map((element, index) => { return { down: element, up: upKeys[index] } });
 
 
+
+let k = 'l';
+log(downKeys.indexOf('k'))
+
+window.addEventListener("keydown", (evt) => {
+    if (downKeys.includes(evt.key)) {
+        log(evt.key);
+        let index = downKeys.indexOf(evt.key);
+        keyState[index].active = true;
+        keyState[index].timestamp = performance.now();
+        let upKey = upKeys[index];
+        log(upKey);
+        let upEvent = new KeyboardEvent("keyup", { key: upKey });
+        window.dispatchEvent(upEvent);
+    }
+});
+
+log(keyState);
 //uworld answers = document.querySelectorAll("label.mat-radio-label")[0].click();
 // [...document.querySelectorAll('[id^="answerhighlight"]')]
 
