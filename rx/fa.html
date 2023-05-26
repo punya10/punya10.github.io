@@ -119,7 +119,7 @@ document.body.appendChild(r);})();*/
                 //var terms = markers.map(m => ['(', [`(${m.getAttribute("data-phrase-term")})`, `(${m.getAttribute("data-phrase-article-title")})`].join(" AND "), ")"].join("")).join(" OR ");
                 var terms = markers.map(m => `${m.getAttribute("data-phrase-term")}`)
                 var articles = markers.map(m => `${m.getAttribute("data-phrase-article-title")}`);
-                var query = [...new Set([...terms,...articles])].join(" OR ");
+                var query = [...new Set([...terms,...articles])].filter(i => i).join(" OR ");
                 console.log(query);
                 //term//data-phrase-term
                 //article//data-phrase-article-title
