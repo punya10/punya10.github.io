@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>rx get fa pages</title>
+    <style>
+        img {
+            width: 100vw;
+        }
+    </style>
+    <script>
+
+
+
+        function waitForElm(selector) {
+            return new Promise(resolve => {
+                if ([...document.querySelectorAll(selector)].length > 0) {
+                    return resolve([...document.querySelectorAll(selector)]);
+                }
+
+                const observer = new MutationObserver(mutations => {
+                    if ([...document.querySelectorAll(selector)].length > 0) {
+                        resolve([...document.querySelectorAll(selector)]);
+                        observer.disconnect();
+                    }
+                });
+
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+            });
+        }
+
+        function ambossLoaded() {
+            console.log("Amboss supposedly loaded...");
+            console.log(window.ambossController);
+        }
+
+
+        function searchRx(...terms) {
+            var query = terms.join(" OR ");
+
+            var queryObject = {
+                "showSearchResults": true,
+                "contentType": "firstaidbookpage",
+                "phrase": query,
+                "categoryOperator": "or",
+                "conceptOperator": "or",
+                "objectIdLimit": 200,
+                "year": 2023,
+                "typeaheadUsed": false,
+                "searchSource": 5,
+                "length": 20
+            }
+
+            return new Promise((resolve) => fetch("https://rxsearch.scholarrx.com/api/v1.0/RxSearch/search", {
+                "body": JSON.stringify(queryObject),
+                "headers": {
+                    "Accept": "application/json, text/plain, */*",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjQwQTY4RUUwODREOTFEMjM5NTcxNDdEMEU3OTI2QzQwMkZENTZCRUUiLCJ0eXAiOiJhdCtqd3QiLCJ4NXQiOiJRS2FPNElUWkhTT1ZjVWZRNTVKc1FDX1ZhLTQifQ.eyJuYmYiOjE2ODUwNzUxMzIsImV4cCI6MTY4NTE2MTUzMiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50LnNjaG9sYXJyeC5jb20iLCJhdWQiOlsiU2Nob2xhclJ4LkFwaSIsIlJ4U2VhcmNoIiwiU2Nob2xhclJ4LklkZW50aXR5IiwiU2Nob2xhclJ4LkJyaWNrc0FwaSJdLCJjbGllbnRfaWQiOiJTY2hvbGFyUnguQ2xpZW50Iiwic3ViIjoiZThkZWEzNGEzZjg1NDgwNmJmZTRlNzg5MTQyYTZmZDMiLCJhdXRoX3RpbWUiOjE2ODUwNzUxMzAsImlkcCI6ImxvY2FsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInByb2ZpbGVJZCI6ImMxMThmMWE2ZTExNjQwYzc5NmE0OThkZjMzODBjMTIzIiwic2Nob29sSWQiOiIxODAiLCJpc0luc3QiOiJGYWxzZSIsInpvbmVpbmZvIjoiUGFjaWZpYyBTdGFuZGFyZCBUaW1lIiwic291cmNlWWVhciI6IjIwMjMiLCJ0cmlhbHMiOiJ7fSIsImFsbG93ZWRCYW5rcyI6WyJCNSIsIkI4IiwiQzEiLCJFVjFGcmVlIiwiRkExRnJlZSIsIkZBQiIsIkZCIiwiRkYxRnJlZSIsIlFNYXgxRnJlZSIsIkIxIiwiQjIiLCJCMyIsIkI0IiwiQjYiLCJCNyIsIkI5IiwiQkEiLCJCQiIsIkJDIiwiQkQiLCJCRSIsIkJGIiwiQkciLCJCSCIsIkJTRCIsIkNQIiwiRVYxIiwiRkExIiwiRkYxIiwiT01NIiwiUU1heDEiLCJRTWF4MVNBRTEiLCJRTWF4MVNBRTIiLCJRTWF4MiIsIlFNYXgyU0FFMSIsIlFNYXgyU0FFMiJdLCJuYW1lIjoicHVueWFqYWluMjBAZ21haWwuY29tIiwic2lkIjoiREQwRUZBMERFQTJERkQyRkEyMDA3RUQ5MzU0NjIwQTEiLCJpYXQiOjE2ODUwNzUxMzIsInNjb3BlIjpbIm9wZW5pZCIsInByb2ZpbGUiLCJTY2hvbGFyUnguQXBpIiwiUnhTZWFyY2giLCJTY2hvbGFyUnguSWRlbnRpdHkiLCJTY2hvbGFyUnguQnJpY2tzQXBpIl0sImFtciI6WyJwd2QiXX0.zjI1iyCJUVmyDwDGOe6-tlXI5od6UW5y0Qrv3dlsnI7uBBkJKs73xclcEtJZbguRdrWQ1prfb4Jps2YQmnxufAAxSS8Va5q3VNMucXVwIzdsAefhJgzcQDMq8Hz9feDJLCrlv40j_Io-cYc8ynGIhqy0hGYPCU-G6bruayXzR5x85SzcZ-4cXlA8aqEotlMfianI7n49L5jXGykO_r_I0Nn0AN-jsL6PlddMh2eJADDLbeJqYmJfcBxxA7wJ7psQSpMNis9szk_fuqCTRZHQl3g8NGER2yhsb9X0RUjXvqlTL44VhqmZd1vTwLI-5vasfvochELK3kO3QCdbopZtzg",
+                    "BrowserOffset": "-7",
+                    "Content-Type": "application/json",
+                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Safari/605.1.15"
+                },
+                "method": "POST"
+            }).then(r => r.json()).then(r => {
+                window.rx = {};
+                window.rx.res = r;
+                window.rx.imgs = r.searchResults.map(i => { return { title: `${i.source.title} (${i.source.faFact})`, url: i.source.imageUrl } });
+                var fapages = document.querySelector("#fapages");
+                window.rx.imgs.forEach(s => {
+                    var i = document.createElement('img');
+                    i.tapedTwice = false;
+                    i.addEventListener("touchstart", function (event) {
+                        if (!i.tapedTwice) {
+                            i.tapedTwice = true;
+                            setTimeout(function () { i.tapedTwice = false; }, 300);
+                            return false;
+                        }
+                        event.preventDefault();
+                        navigator.share(s)
+                    });
+                    i.src = s.url;
+                    fapages.appendChild(i);
+                })
+                return resolve(window.rx.imgs);
+            }).catch(() => resolve({})));
+
+        }
+
+
+        window.addEventListener("DOMContentLoaded", (event) => {
+            console.log("DOM fully loaded and parsed");
+            const qael = document.querySelector("#qa");
+            const urlParams = new URLSearchParams(window.location.search);
+            //const encodedData = btoa("Hello, world"); // encode a string
+            const encodedData = urlParams.get('data')
+            const decodedData = atob(encodedData); // decode the string
+            console.log("encoded", encodedData);
+            console.log("decoded", decodedData);
+            qael.textContent = decodedData;
+
+
+            waitForElm('.amboss-marker').then((markers) => {
+                console.log('Element is ready');
+                console.log(markers);
+                var terms = markers.map(m => ['(', [`(${m.getAttribute("data-phrase-term")})`, `(${m.getAttribute("data-phrase-article-title")})`].join(" AND "), ")"].join(""))
+                console.log(terms);
+                //term//data-phrase-term
+                //article//data-phrase-article-title
+                searchRx(terms).then(d => console.log(d));
+            });
+            window.ambossController.ambossifyCard();
+
+        });
+
+    </script>
+</head>
+
+<body>
+    <div id="fapages"></div>
+    <div id="qa"></div>
+    <script type="module" src="https://content-gateway.us.production.amboss.com/amboss.js"
+        data-addon="eyJhbm9uSWQiOiAiNzMzMTY5NDUtMWU4Mi00NzRlLWI1MGEtNGUzZjdiNTI1Mzk1IiwgInVzZXJJZCI6ICJDM1BXcWtlbDAiLCAidG9rZW4iOiAiZXlKaGJHY2lPaUpTVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmxlSEFpT2pFMk9EYzBNRGsxT1RBc0ltbHpjeUk2SWtGTlFrOVRVeUlzSW5OMVlpSTZJa016VUZkeGEyVnNNQ0lzSW1saGRDSTZNVFk0TkRneE56VTVNSDAuU014THFwdFViSFFQTmJ3bExIaGlQWmt3LVRWbzhnWmxKMUtLa25oUm1WYWdaQzlrVmF2dmE4bXlOcmFzV2JFVFI2UlJhVFl6N0JNZE1YM3VTcVZ3a0NwbmcyVHVGb3VIM19YM29qakRGYjRGRTdhNDJBR0pPVC1Eamd4d2hQMmx6MWZSTlZOM3lMOXh3Znk0OXFjSWl4b3AyOVA0clRMSlljVThBRERqckNxWHE4ZXJCSnI0VDJQLVA1M3BGTXBUV0NwNkluVUEzclB0Tm1IbUtXWDdCSlNzWnNUT0RsR3YweDYta21SalpCM094Q3dFdGQxbG1rVzNvT2kwUEhRYUlfdzBGVjB3OEpNaXg2WkIxWDhjQXFINFJSemNxV2trX1JHVkpfbkhGa2pabTFzVzJldmFlUTc2cDZzYXdmaGxwb2JGYmhySVdWUnNudGRtb2lpQnRnIn0="
+        id="amboss-snippet" onload="ambossLoaded();"></script>
+</body>
+</html>
