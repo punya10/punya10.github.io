@@ -116,7 +116,8 @@ document.body.appendChild(r);})();*/
             waitForElm('.amboss-marker').then((markers) => {
                 console.log('Element is ready');
                 console.log(markers);
-                var terms = markers.map(m => ['(', [`(${m.getAttribute("data-phrase-term")})`, `(${m.getAttribute("data-phrase-article-title")})`].join(" AND "), ")"].join("")).join(" OR ");
+                //var terms = markers.map(m => ['(', [`(${m.getAttribute("data-phrase-term")})`, `(${m.getAttribute("data-phrase-article-title")})`].join(" AND "), ")"].join("")).join(" OR ");
+                var terms = markers.map(m => `${m.getAttribute("data-phrase-term")}`).join(" OR ");
                 console.log(terms);
                 //term//data-phrase-term
                 //article//data-phrase-article-title
