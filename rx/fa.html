@@ -71,7 +71,7 @@
             }).then(r => r.json()).then(r => {
                 window.rx = {};
                 window.rx.res = r;
-                window.rx.imgs = r.searchResults.map(i => { return { title: `${i.source.title} (${i.source.faFact})`, url: i.source.imageUrl } });
+                window.rx.imgs = r.searchResults.map(i => { return { title: `${i.source.title} (${i.source.faFact})`, text: `${i.source.title} (${i.source.faFact})`, url: i.source.imageUrl } });
                 var fapages = document.querySelector("#fapages");
                 window.rx.imgs.forEach(s => {
                     var i = document.createElement('img');
