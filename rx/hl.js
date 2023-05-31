@@ -373,7 +373,7 @@ function detectTripleTapClosure() {
 document.body.addEventListener('touchend', detectTripleTapClosure(), {
     passive: false
 });
-document.body.addEventListener('touchend', detectDoubleTapClosure(), {
+/*document.body.addEventListener('touchend', detectDoubleTapClosure(), {
     passive: false
-});
-//window.addEventListener('load', init);
+});*/
+window.addEventListener('load', init);
