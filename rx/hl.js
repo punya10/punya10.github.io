@@ -140,6 +140,10 @@ function init() {
     for (const ev of ['touchend', 'touchleave', 'mouseup']) {
         $canvas.addEventListener(ev, pencilUp)
     };
+        
+document.body.addEventListener('touchend', detectTripleTapClosure(), {
+    passive: false
+});
 }
 
 
@@ -370,9 +374,6 @@ function detectTripleTapClosure() {
     };
 }
 
-document.body.addEventListener('touchend', detectTripleTapClosure(), {
-    passive: false
-});
 /*document.body.addEventListener('touchend', detectDoubleTapClosure(), {
     passive: false
 });*/
