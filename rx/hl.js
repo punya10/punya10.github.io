@@ -120,7 +120,6 @@ let pen = 0.69142;
 let highlighter = pen * 10;
 let selectedWidth = highlighter;
 
-window.addEventListener('load', init);
 
 function init() {
     document.head.innerHTML += phead;
@@ -141,10 +140,6 @@ function init() {
     for (const ev of ['touchend', 'touchleave', 'mouseup']) {
         $canvas.addEventListener(ev, pencilUp)
     };
-
-    document.body.addEventListener('touchend', detectDoubleTapClosure(), {
-        passive: false
-    });
 }
 
 
@@ -328,6 +323,26 @@ const getTouchXY = function(e) {
 
 /* Based on this http://jsfiddle.net/brettwp/J4djY/*/
 function detectDoubleTapClosure() {
+    let lastTap = 0;
+    let timeout;
+    return function detectDoubleTap(event) {
+        const curTime = new Date().getTime();
+        const tapLen = curTime - lastTap;
+        if (tapLen < 500 && tapLen > 0) {
+            console.log('Tripple tapped!');
+            event.preventDefault();
+            init();
+        } else {
+            timeout = setTimeout(() => {
+                clearTimeout(timeout);
+            }, 500);
+        }
+        lastTap = curTime;
+    };
+}
+
+/* Based on this http://jsfiddle.net/brettwp/J4djY/*/
+function detectTripleTapClosure() {
     let lastToLastTap = 0;
     let lastTap = 0;
     let timeout;
@@ -354,3 +369,11 @@ function detectDoubleTapClosure() {
         lastTap = curTime;
     };
 }
+
+document.body.addEventListener('touchend', detectTripleTapClosure(), {
+    passive: false
+});
+document.body.addEventListener('touchend', detectDoubleTapClosure(), {
+    passive: false
+});
+//window.addEventListener('load', init);
