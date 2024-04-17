@@ -10,14 +10,17 @@ $(document).ready(function(){
 
 var params = new URLSearchParams(window.location.search);
 var url = params.get('url');
-alert(url);
+//alert(url);
     
 // default URL
 var default_url = decodeURIComponent(url) || "https://soundcloud.com/dan-de-leon/pr081-dan-de-leon-live-at-the-eagle";
-alert(default_url);
+//alert(default_url);
 
 // ---> http://soundcloud.com/you/apps/new
 var client_id = 'h69ITPa7cS2ubjfioxkGUL4VvdeVm8LY';
+var oauth_token = '2-295400-120868825-CLJwvlgtYgkpRC';
+document.cookie = "datadome=Nx63NxVIa1D5DRVBVmFFKkO9StfxGRjTo_E8xCbXXZfxhG~PoGXXrkH0dpk2hn04CgJXgrAIT0vSd3UgTyDgpmxaBaAOnW5EQi40JJNT~5CA~li_ckXssNUKwSQ69vNr; connect_session=1; soundcloud_session_hint=1; ajs_anonymous_id=%22ec57f3f2-705c-4181-ac77-d7f4d9e49f98%22; OptanonConsent=isGpcEnabled=0&datestamp=Tue+Apr+16+2024+22%3A11%3A06+GMT-0700+(Pacific+Daylight+Time)&version=202310.2.0&browserGpcFlag=0&isIABGlobal=false&hosts=&consentId=3ff8c23c-5d4c-4c88-8930-5064b583d7be&interactionCount=2&landingPath=NotLandingPage&groups=C0003%3A1%2CC0007%3A1%2CC0001%3A1%2CC0002%3A1%2CC0004%3A1%2CC0005%3A1%2CSPD_BG%3A1&iType=6&geolocation=US%3BCA&AwaitingReconsent=false; cookie_consent=1; moe_uuid=8863acf8-6dcf-48ed-bce8-2901a58b164f; sc_anonymous_id=439618-850091-251992-618720; ajs_user_id=%22soundcloud%3Ausers%3A120868825%22; ja=64; _ga_7LNW7LLBZQ=GS1.2.1713328650.1.1.1713330403.54.0.0; _ga=GA1.2.1972932908.1713313962; _gid=GA1.2.197340608.1713313976; sc_session={%22id%22:%22309A763F-C753-4A04-BE37-CD6EC5228312%22%2C%22lastBecameInactive%22:%222024-04-17T04:59:09.596Z%22}; sclocale=en; _fbp=fb.1.1713313961471.744162924; _gcl_au=1.1.2126648953.1713313976; oauth_token=2-295400-120868825-CLJwvlgtYgkpRC; OptanonAlertBoxClosed=2024-04-17T00:32:55.612Z; __qca=P0-1203866974-1713313960970; rubicon_last_sync=synced";
+
 
 // SoundCloud API initialize
 SC.initialize({client_id: client_id});
@@ -140,9 +143,7 @@ SoundCloud + Web Audio API test (<a href='//punya10.github.io/sc.html' target='_
     </td>
 </tr>
 <tr>
-    <td>
-        Frequency(Hz):
-    </td>
+    <td>Frequency(Hz):</td>
     <td>
         <input id='range_freq' type='range' style='width:400px;' min='10' max='22050' step='0.001' value='350' autocomplete='off' />
     </td>
@@ -162,9 +163,7 @@ SoundCloud + Web Audio API test (<a href='//punya10.github.io/sc.html' target='_
     </td>
 </tr>
 <tr>
-    <td>
-        Type:
-    </td>
+    <td>Type:</td>
     <td>
         <select id='select_type' size='1' style='width:400px;' autocomplete='off'>
             <option value='lowpass' selected>lowpass</option>
