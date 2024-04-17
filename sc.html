@@ -7,8 +7,14 @@
 <script src='http://connect.soundcloud.com/sdk.js'></script>
 <script>
 $(function(){
+
+const params = new URLSearchParams(window.location.search);
+const url = params.get('url');
+alert(url);
+    
 // default URL
-var default_url = 'https://soundcloud.com/dan-de-leon/pr081-dan-de-leon-live-at-the-eagle';//'https://soundcloud.com/[artist_name]/[track_name]';
+var default_url = url || 'https://soundcloud.com/dan-de-leon/pr081-dan-de-leon-live-at-the-eagle';//'https://soundcloud.com/[artist_name]/[track_name]';
+alert(default_url);
 
 // ---> http://soundcloud.com/you/apps/new
 var client_id = 'h69ITPa7cS2ubjfioxkGUL4VvdeVm8LY';
