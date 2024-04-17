@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>SoundCloud + Web Audio API test</title>
+<script src='http://code.jquery.com/jquery-2.1.1.min.js'></script>
+<script src='http://connect.soundcloud.com/sdk.js'></script>
+<script>
+$(function(){
+// default URL
+var default_url = 'https://soundcloud.com/dan-de-leon/pr081-dan-de-leon-live-at-the-eagle';//'https://soundcloud.com/[artist_name]/[track_name]';
+
+// ---> http://soundcloud.com/you/apps/new
+var client_id = 'h69ITPa7cS2ubjfioxkGUL4VvdeVm8LY';
+
+// SoundCloud API initialize
+SC.initialize({client_id: client_id});
+
+// HTML5 audio
+var audio_element = new Audio();
+
+// audio context
+var audio_context = new AudioContext();
+
+// media element node
+var element_source = audio_context.createMediaElementSource(audio_element);
+
+// gain node
+var gain = audio_context.createGain();
+
+// biquad filter node
+var biquad_filter = audio_context.createBiquadFilter();
+
+// gain slider
+$('#range_gain')
+.on('input', function(){
+    gain.gain.value = $(this).val();
+    $('#text_gain').text($(this).val());
+})
+.trigger('input');
+
+// frequency slider
+$('#range_freq')
+.on('input', function(){
+    biquad_filter.frequency.value = $(this).val();
+    $('#text_freq').text($(this).val());
+})
+.trigger('input');
+
+// resonance slider
+$('#range_reso')
+.on('input', function(){
+    biquad_filter.Q.value = $(this).val();
+    $('#text_reso').text($(this).val());
+})
+.trigger('input');
+
+// type combobox
+$('#select_type')
+.on('change', function(){
+    biquad_filter.type = $(this).val();
+})
+.trigger('change');
+
+// connect
+element_source.connect(gain);
+gain.connect(biquad_filter);
+biquad_filter.connect(audio_context.destination);
+
+// SoundCloud URL
+$('#text_soundcloud_url').val(default_url);
+
+// play button
+$('#button_play')
+.click(function(){
+    if( $('#text_soundcloud_url').val() == default_url ){
+        return;
+    }
+    if( $(this).val() == 'Play' ){
+        $('#text_soundcloud_url').attr({disabled:'disabled'});
+        $('#button_play').attr({disabled:'disabled'});
+
+        // get track ID from URL.
+        SC.get('/resolve', { url: $('#text_soundcloud_url').val() }, function(track) {
+            SC.get('/tracks/' + track.id, { }, function(sound){
+                // set stream URL
+                audio_element.src = sound.stream_url + '?client_id=' + client_id;
+
+                // play
+                audio_element.load();
+                audio_element.play();
+
+                $('#button_play').val('Stop');
+                $('#button_play').removeAttr('disabled');
+            });
+        });
+    }
+    else{
+        // stop
+        audio_element.pause();
+        audio_element.currentTime = 0;
+
+        $('#button_play').val('Play');
+        $('#text_soundcloud_url').removeAttr('disabled');
+    }
+});
+});
+</script>
+</head>
+<body>
+SoundCloud + Web Audio API test (<a href='https://gist.github.com/fukuroder/9a892e6247e946112abb' target='_blank'>source code</a>)
+<hr/>
+<table>
+<tr>
+    <td>
+        URL:
+    </td>
+    <td>
+        <input type='text' id='text_soundcloud_url' style='width:400px;' autocomplete='off' />
+    </td>
+    <td>
+        <input type='button' id='button_play' style='width:50px;' value='Play' autocomplete='off' />
+    </td>
+</tr>
+<tr>
+    <td>
+        Gain:
+    </td>
+    <td>
+        <input id='range_gain' type='range' style='width:400px;' min='0' max='1' step='0.001' value='0.5' autocomplete='off' />
+    </td>
+    <td>
+        <span id='text_gain'></span>
+    </td>
+</tr>
+<tr>
+    <td>
+        Frequency(Hz):
+    </td>
+    <td>
+        <input id='range_freq' type='range' style='width:400px;' min='10' max='22050' step='0.001' value='350' autocomplete='off' />
+    </td>
+    <td>
+        <span id='text_freq'></span>
+    </td>
+</tr>
+<tr>
+    <td>
+        Resonance:
+    </td>
+    <td>
+        <input id='range_reso' type='range' style='width:400px;' min='0.707' max='20' step='0.001' value='0.707' autocomplete='off' />
+    </td>
+    <td>
+        <span id='text_reso'></span>
+    </td>
+</tr>
+<tr>
+    <td>
+        Type:
+    </td>
+    <td>
+        <select id='select_type' size='1' style='width:400px;' autocomplete='off'>
+            <option value='lowpass' selected>lowpass</option>
+            <option value='highpass'>highpass</option>
+            <option value='bandpass'>bandpass</option>
+        </select>
+    </td>
+</tr>
+</table>
+</body>
+</html>
