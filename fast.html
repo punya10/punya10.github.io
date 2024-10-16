@@ -1,0 +1,2 @@
+javascript:(function(){[document,...[...document.querySelectorAll("iframe")].map(iframe => iframe.contentDocument).filter(iframe => !!iframe)].some(d => [...d.querySelectorAll("video")].filter(video => video.paused == false && video.ended == false).some(video => !!video.addEventListener("timeupdate", (e) => (video.playbackRate+=0.1))));})();
+
