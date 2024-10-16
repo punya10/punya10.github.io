@@ -1,2 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>App</title>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <div id="app">
+      <button id="open-button">Open window</button>
+      <button id="switch-button">Switch page</button>
+    </div>
 
+    <script>
+        const log = (...msg) => document.body.prepend(performance.now()+"|"+JSON.stringify(msg)+"<br>\n");
+    
+      let open = null;
+      document.getElementById('open-button').addEventListener('click', () => {
+        open = window.open('https://211vv50z30.codesandbox.io/pages/foo.html');
+        open.addEventListener('load', () => log('this fires'));
+      });
 
+      document.getElementById('switch-button').addEventListener('click', () => {
+        open.location.replace(
+          'https://211vv50z30.codesandbox.io/pages/bar.html'
+        );
+        // this is the important part ↓
+        open.addEventListener('unload', () => {
+          log('unloaded');
+          setTimeout(() => {
+            open.addEventListener('load', () => log('gotcha'));
+          }, 0);
+        });
+      });
+    </script>
+  </body>
+</html>
