@@ -128,17 +128,20 @@
       const log = window.alert;
       const base = 'https://faststream.online/player/';
       let src = window.prompt("Video Source URL?", window.location.href.split("#")[1] || 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8');
-      let open = window.open(base);
+      let open = null;
+      
       
       setTimeout(function(){
         open.location.replace(base + '#' + src);
         open.addEventListener('unload', () => {
-          log('unloaded');
+          open.alert('2=unloaded');
           setTimeout(() => {
-            open.addEventListener('load', () => log('gotcha'));
+            open.addEventListener('load', () => open.alert('3=got another load'));
           }, 0);
         });
       }, 3000);
+      open = window.open(base);
+      open.alert("1=load");
       })();
     </script>
   </body>
