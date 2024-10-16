@@ -124,25 +124,19 @@
  
       <script>
       //const log = (...msg) => document.body.prepend(performance.now()+"|"+JSON.stringify(msg)+"<br>\n");
-      const log = console.log;
-      let open = null;
-      document.getElementById('open-button').addEventListener('click', () => {
-        open = window.open('https://211vv50z30.codesandbox.io/pages/foo.html');
-        open.addEventListener('load', () => log('this fires'));
-      });
-
-      document.getElementById('switch-button').addEventListener('click', () => {
-        open.location.replace(
-          'https://211vv50z30.codesandbox.io/pages/bar.html'
-        );
-        // this is the important part ↓
+      const log = console.log || window.alert;
+      let open = window.open('https://211vv50z30.codesandbox.io/pages/foo.html');
+      
+      setTimeout(function(){
+        open.location.replace('https://211vv50z30.codesandbox.io/pages/bar.html');
         open.addEventListener('unload', () => {
           log('unloaded');
           setTimeout(() => {
             open.addEventListener('load', () => log('gotcha'));
           }, 0);
         });
-      });
+      }, 3000);
+      
     </script>
   </body>
 </html>
