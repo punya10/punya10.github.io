@@ -123,6 +123,7 @@
 
  
       <script>
+      (function(){
       //const log = (...msg) => document.body.prepend(performance.now()+"|"+JSON.stringify(msg)+"<br>\n");
       const log = console.log || window.alert;
       let open = window.open('https://211vv50z30.codesandbox.io/pages/foo.html');
@@ -136,7 +137,7 @@
           }, 0);
         });
       }, 3000);
-      
+      })();
     </script>
   </body>
 </html>
