@@ -20,13 +20,13 @@
       let next = base+"#"+src;
       
       window.alert("reloading");
-      let fw = window.open(base, '_blank');
+      let fw = window.open('', '_blank');
       
-      fw.addEventListener('unload', () => {
-        window.alert("unloaded!");
-        setTimeout(function() {
+      fw.addEventListener('unload', function() {
+        fw.alert("unloaded!");
+        window.setTimeout(function() {
           fw.addEventListener('load', function() {
-            window.alert("loaded!!");
+            fw.alert("loaded!!");
           });
         }, 0);
       });
