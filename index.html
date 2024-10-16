@@ -125,11 +125,13 @@
       <script>
       (function(){
       //const log = (...msg) => document.body.prepend(performance.now()+"|"+JSON.stringify(msg)+"<br>\n");
-      const log = console.log || window.alert;
-      let open = window.open('https://211vv50z30.codesandbox.io/pages/foo.html');
+      const log = window.alert;
+      const base = 'https://faststream.online/player/';
+      let src = window.prompt("Video Source URL?", window.location.href.split("#")[1] || 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8');
+      let open = window.open(base);
       
       setTimeout(function(){
-        open.location.replace('https://211vv50z30.codesandbox.io/pages/bar.html');
+        open.location.replace(base + '#' + src);
         open.addEventListener('unload', () => {
           log('unloaded');
           setTimeout(() => {
