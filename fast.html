@@ -8,7 +8,7 @@
   </head>
   <body>
     <p>1</p>
-    <script>
+    <!--<script>
       (function(){
         let base = "https://faststream.online/player/";
         let src = window.prompt("Video Source URL?", (window.location.href.split("#")[1] || "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"));
@@ -21,7 +21,7 @@
         fw.addEventListener('unload', () => setTimeout(() => fw.addEventListener('load', () => !!fw.document.body.prepend(`loaded: ${window.location.href}`) && !![fw.document,...[...fw.document.querySelectorAll("iframe")].map(f => f.contentDocument).filter(f => !!f)].some(d => [...d.querySelectorAll("video")].filter(v => v.ended == false).some(v => !!v.addEventListener("timeupdate", () => v.playbackRate <= 16.0 && v.playbackRate += 0.1)))), 0));
         window.location.replace(`${base}#${src}`);
       })();
-    </script>
+    </script>-→
   </body>
 </html>
 
