@@ -3,14 +3,7 @@
   <head>
     <title>App</title>
     <meta charset="UTF-8" />
-  </head>
-  <body>
-    <div id="app">
-      <button id="open-button">Open window</button>
-      <button id="switch-button">Switch page</button>
-    </div>
-
-    <script>
+       <script>
       (function() {
   const id = "consoleElement12312312khfasdakh";
   if (document.getElementById(id) === undefined) return;
@@ -120,7 +113,16 @@
 
   document.body.appendChild(consoleElement);
 })();
-      
+       </script>
+  </head>
+  <body>
+    <div id="app">
+      <button id="open-button">Open window</button>
+      <button id="switch-button">Switch page</button>
+    </div>
+
+ 
+      <script>
       //const log = (...msg) => document.body.prepend(performance.now()+"|"+JSON.stringify(msg)+"<br>\n");
       const log = console.log;
       let open = null;
