@@ -31,8 +31,7 @@
         }, 0);
       });
         //    !!fw.document.body.prepend(`loaded: ${window.location.href}`) && !![fw.document,...[...fw.document.querySelectorAll("iframe")].map(f => f.contentDocument).filter(f => !!f)].some(d => [...d.querySelectorAll("video")].filter(v => v.ended == false).some(v => !!v.addEventListener("timeupdate", () => v.playbackRate <= 16.0 && v.playbackRate += 0.1)))), 0));
-      fw = window.open(base);
-      
+      fw = window.open(base, '_blank');
       fw.location.replace(next);
       
     </script>
