@@ -26,17 +26,17 @@
       //let fw = window.open(base, '_blank');
 
       
-      fw.addEventListener('unload', () => {
-        fw.alert("unloaded!");
-        window.setTimeout(function() {
-          fw.addEventListener('load', () => {
-            fw.alert("loaded!!");
+      window.addEventListener('unload', () => {
+        window.alert("unloaded!");
+        setTimeout(function() {
+          window.addEventListener('load', () => {
+            window.alert("loaded!!");
           });
         }, 0);
       });
         //    !!fw.document.body.prepend(`loaded: ${window.location.href}`) && !![fw.document,...[...fw.document.querySelectorAll("iframe")].map(f => f.contentDocument).filter(f => !!f)].some(d => [...d.querySelectorAll("video")].filter(v => v.ended == false).some(v => !!v.addEventListener("timeupdate", () => v.playbackRate <= 16.0 && v.playbackRate += 0.1)))), 0));
       
-      fw.location.replace(next);
+      window.location.replace(next);
       
     </script>
     <!--<script>
