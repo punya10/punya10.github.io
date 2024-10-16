@@ -20,7 +20,7 @@
       let next = base+"#"+src;
       
       document.body.append("reloading");
-      let fw = window.open(src);
+      let fw = window.open(base, '_blank');
 
       
       fw.addEventListener('unload', function() {
