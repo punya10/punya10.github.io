@@ -26,11 +26,11 @@
       //let fw = window.open(base, '_blank');
 
       
-      window.addEventListener('unload', () => {
-        window.alert("unloaded!");
+      window.addEventListener('unload', function() {
+        alert("unloaded!");
         setTimeout(function() {
-          window.addEventListener('load', () => {
-            window.alert("loaded!!");
+          window.addEventListener('load', function() {
+            alert("loaded!!");
           });
         }, 0);
       });
