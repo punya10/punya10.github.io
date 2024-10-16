@@ -20,13 +20,16 @@
       let next = base+"#"+src;
       
       document.body.append("reloading");
-      let fw = window.open(base, '_blank');
+      var fw = null;
+      fw = window.open("https://www.example.com", "myPopup", "width=400,height=400");
+      
+      //let fw = window.open(base, '_blank');
 
       
-      window.addEventListener('unload', function() {
+      fw.addEventListener('unload', () => {
         fw.alert("unloaded!");
         window.setTimeout(function() {
-          fw.addEventListener('load', function() {
+          fw.addEventListener('load', () => {
             fw.alert("loaded!!");
           });
         }, 0);
