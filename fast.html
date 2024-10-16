@@ -20,18 +20,20 @@
       let next = base+"#"+src;
       
       window.alert("reloading");
+      let fw = null;
       
-      window.addEventListener('unload', () => {
-        window.alert("unloaded!");
-        window.setTimeout(function() {
-          window.addEventListener('load', function() {
-            window.alert("loaded!!");
+      fw.addEventListener('unload', () => {
+        fw.alert("unloaded!");
+        setTimeout(function() {
+          fw.addEventListener('load', function() {
+            fw.alert("loaded!!");
           });
         }, 0);
       });
         //    !!fw.document.body.prepend(`loaded: ${window.location.href}`) && !![fw.document,...[...fw.document.querySelectorAll("iframe")].map(f => f.contentDocument).filter(f => !!f)].some(d => [...d.querySelectorAll("video")].filter(v => v.ended == false).some(v => !!v.addEventListener("timeupdate", () => v.playbackRate <= 16.0 && v.playbackRate += 0.1)))), 0));
+      fw = window.open(base);
       
-      window.location.replace(next);
+      fw.location.replace(next);
       
     </script>
     <!--<script>
