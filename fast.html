@@ -23,7 +23,7 @@
       let fw = window.open(base, '_blank');
 
       
-      fw.addEventListener('unload', function() {
+      window.addEventListener('unload', function() {
         fw.alert("unloaded!");
         window.setTimeout(function() {
           fw.addEventListener('load', function() {
