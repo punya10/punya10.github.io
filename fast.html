@@ -1,2 +1,39 @@
-javascript:(function(){[document,...[...document.querySelectorAll("iframe")].map(iframe => iframe.contentDocument).filter(iframe => !!iframe)].some(d => [...d.querySelectorAll("video")].filter(video => video.paused == false && video.ended == false).some(video => !!video.addEventListener("timeupdate", (e) => (video.playbackRate+=0.1))));})();
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>FastSteam + JS</title>
+  </head>
+  <body>
+    <script type="text/javascript">
+        let base = "https://faststream.online/player/";
+        let src = prompt("Video Source URL?", (window.location.href.split("#")[1] || "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"));
+        
+        function vDo() {
+            return !!(function(){
+                window.alert(window.location.href);
+                // video.paused == false && 
+                [document,...[...document.querySelectorAll("iframe")].map(iframe => iframe.contentDocument).filter(iframe => !!iframe)].some(d => [...d.querySelectorAll("video")].filter(video => video.ended == false).some(video => !!video.addEventListener("timeupdate", () => (video.playbackRate <= 16.0 && video.playbackRate += 0.1))));
+            })();
+        }
+            
+        // old page unloaded
+        window.addEventListener('unload', function() {
+            setTimeout(function() {
+                window.addEventListener('load', vDo);
+            }, 0);
+        });
+        
+        window.location.replace(`${base}#${src}`);
+        
+    </script>
+  </body>
+</html>
+
+
+
+
+
 
