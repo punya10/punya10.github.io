@@ -19,8 +19,9 @@
       
       let next = base+"#"+src;
       
-      window.alert("reloading");
+      document.body.append("reloading");
       let fw = window.open(src);
+
       
       fw.addEventListener('unload', function() {
         fw.alert("unloaded!");
