@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="utf-8" />
   <title>Screen Capture API demo</title>
+  <style type="module" src="https://unpkg.com/ocrad.js@0.0.1/ocrad.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -76,39 +76,27 @@
     const videoElem = document.querySelector("video");
     const startElem = document.getElementById("start");
     const stopElem = document.getElementById("stop");
+    const log = document.querySelector("#demo p");
 
     // Options for getDisplayMedia()
-
     const displayMediaOptions = {
-      video: {
-        displaySurface: "window",
-      },
+      video: { displaySurface: "window", },
       audio: false,
       preferCurrentTab: true,
     };
 
     // Set event listeners for the start and stop buttons
-    startElem.addEventListener(
-      "click",
-      (evt) => {
+    startElem.addEventListener("click", (evt) => {
         startCapture();
-      },
-      false
-    );
+    }, false);
 
-    stopElem.addEventListener(
-      "click",
-      (evt) => {
+    stopElem.addEventListener("click", (evt) => {
         stopCapture();
-      },
-      false
-    );
+    }, false);
 
     async function startCapture() {
       try {
-        videoElem.srcObject = await navigator.mediaDevices.getDisplayMedia(
-          displayMediaOptions
-        );
+        videoElem.srcObject = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
       } catch (err) {
         console.error(err);
       }
@@ -116,17 +104,29 @@
 
     function stopCapture(evt) {
       let tracks = videoElem.srcObject.getTracks();
-
       tracks.forEach((track) => track.stop());
       videoElem.srcObject = null;
     }
 
+		function recognize_snapshot() {
+		    log.innerText += "(Recognizing...)"
+				OCRAD(videoElem, { }, function(text) {
+					log.innerText = text || "(empty)";
+				});
+	 }
 
-    document.addEventListener("DOMContentLoaded", () => {
+		/*function acquiredVideo(stream){
         startCapture();
-    });
-
-  </script>
+				var video = document.getElementById('video')
+				if ('mozSrcObject' in video) { video.mozSrcObject = stream;
+				} else if (window.webkitURL) { video.src = window.webkitURL.createObjectURL(stream);
+				} else { video.src = stream; }
+				video.play();
+			}*/
+			window.onload = function(){
+				navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+				if(navigator.getUserMedia) navigator.getUserMedia({ video: true }, startCapture, function(){})
+			}
 </body>
 
 </html>
