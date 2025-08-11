@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Screen Capture API demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      padding: 0 25px;
+    }
+
+    #main-app {
+      display: flex;
+      gap: 5%;
+      min-width: 980px;
+    }
+
+    video,
+    #demo {
+      flex: 1;
+    }
+
+    video,
+    #demo>p {
+      border: 1px solid #ccc;
+      margin: 0;
+    }
+
+    video {
+      max-width: 50%;
+      aspect-ratio: 4/3;
+    }
+
+    #demo>h2 {
+      margin-top: 0;
+    }
+
+    #demo>p {
+      padding: 5px;
+      height: 320px;
+    }
+  </style>
+  <script>
+    const videoElem = document.querySelector("video");
+    const startElem = document.getElementById("start");
+    const stopElem = document.getElementById("stop");
+
+    // Options for getDisplayMedia()
+
+    const displayMediaOptions = {
+      video: {
+        displaySurface: "window",
+      },
+      audio: false,
+      preferCurrentTab: true,
+    };
+
+    // Set event listeners for the start and stop buttons
+    startElem.addEventListener(
+      "click",
+      (evt) => {
+        startCapture();
+      },
+      false
+    );
+
+    stopElem.addEventListener(
+      "click",
+      (evt) => {
+        stopCapture();
+      },
+      false
+    );
+
+    async function startCapture() {
+      try {
+        videoElem.srcObject = await navigator.mediaDevices.getDisplayMedia(
+          displayMediaOptions
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function stopCapture(evt) {
+      let tracks = videoElem.srcObject.getTracks();
+
+      tracks.forEach((track) => track.stop());
+      videoElem.srcObject = null;
+    }
+
+  </script>
+</head>
+
+<body>
+  <h1>Screen Capture API example</h1>
+  <p>
+    Click the "Start Capture" button to capture a tab, window, or screen as a
+    video stream and broadcast it in the
+    <code>&lt;video&gt;</code> element on the left. This demo uses the Screen
+    Capture API.
+  </p>
+
+  <p>
+    <button id="start">Start Capture</button>&nbsp;<button id="stop">
+      Stop Capture
+    </button>
+  </p>
+
+  <div id="main-app">
+    <video autoplay></video>
+    <div id="demo">
+      <h2>Some kind of demo</h2>
+      <p>
+        This container is a placeholder for some kind of demo that you might
+        want to share with other participants.
+      </p>
+    </div>
+  </div>
+</body>
+
+</html>
