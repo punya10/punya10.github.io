@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>VSync Scrub Video Player</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #111;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .player {
+      max-width: 960px;
+      width: 100%;
+      padding: 12px;
+      box-sizing: border-box;
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      background: #000;
+      display: block;
+      border-radius: 8px;
+      border: 1px solid #333;
+    }
+
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    .controls input[type="range"] {
+      flex: 1;
+    }
+
+    button {
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid #555;
+      background: #222;
+      color: #eee;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #333;
+    }
+
+    label {
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="player">
+    <!-- Hidden video element used only as a decode source -->
+    <video
+      id="video"
+      src="https://vd511.okcdn.ru/video.m3u8?cmd=videoPlayerCdn&expires=1763645263572&srcIp=70.241.136.170&pr=10&srcAg=SAFARI_MAC&ch=1859034457&ms=185.226.55.21&type=2&sig=qCGrGiTtqyI&ct=8&urls=185.226.52.35&clientType=0&zs=43&id=1371471743701"
+      preload="auto"
+      style="display:none"
+    ></video>
+
+    <!-- Canvas is what you actually see (vsynced via requestAnimationFrame) -->
+    <canvas id="canvas"></canvas>
+
+    <div class="controls">
+      <button id="playPauseBtn">Play</button>
+
+      <label>
+        Speed:
+        <span id="speedLabel">1.00×</span>
+      </label>
+      <input
+        id="speedSlider"
+        type="range"
+        min="0.1"
+        max="75"
+        step="0.1"
+        value="1"
+      />
+
+      <label>
+        Position:
+        <input
+          id="seekSlider"
+          type="range"
+          min="0"
+          max="1000"
+          value="0"
+        />
+      </label>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      const playPauseBtn = document.getElementById("playPauseBtn");
+      const speedSlider = document.getElementById("speedSlider");
+      const speedLabel = document.getElementById("speedLabel");
+      const seekSlider  = document.getElementById("seekSlider");
+
+      // STATE
+      let playing = false;
+      let virtualTime = 0;          // our own playhead in seconds
+      let lastFrameTs = null;       // last rAF timestamp
+      let speed = parseFloat(speedSlider.value);  // "×" speed (1x, 10x, 75x, etc.)
+      let rafId = null;
+
+      // When metadata is loaded, size the canvas
+      video.addEventListener("loadedmetadata", () => {
+        canvas.width = video.videoWidth || 1280;
+        canvas.height = video.videoHeight || 720;
+        virtualTime = 0;
+        video.currentTime = 0;
+        drawCurrentFrame();
+      });
+
+      // Keep seek slider in sync when we do jumps programmatically
+      function updateSeekSliderFromVirtualTime() {
+        if (!isFinite(video.duration) || video.duration <= 0) return;
+        const ratio = virtualTime / video.duration;
+        seekSlider.value = Math.max(0, Math.min(1000, Math.round(ratio * 1000)));
+      }
+
+      // Handle user scrubbing via seek slider
+      seekSlider.addEventListener("input", () => {
+        if (!isFinite(video.duration) || video.duration <= 0) return;
+        const ratio = seekSlider.value / 1000;
+        virtualTime = ratio * video.duration;
+        video.currentTime = virtualTime;
+        // Draw as soon as the browser has something
+        video.addEventListener(
+          "seeked",
+          () => {
+            drawCurrentFrame();
+          },
+          { once: true }
+        );
+      });
+
+      // Speed controls
+      speedSlider.addEventListener("input", () => {
+        speed = parseFloat(speedSlider.value);
+        speedLabel.textContent = speed.toFixed(2) + "×";
+      });
+
+      playPauseBtn.addEventListener("click", () => {
+        if (!playing) {
+          startPlaybackLoop();
+        } else {
+          stopPlaybackLoop();
+        }
+      });
+
+      function startPlaybackLoop() {
+        if (playing) return;
+        playing = true;
+        playPauseBtn.textContent = "Pause";
+
+        // We control time; keep the video "paused"
+        video.pause();
+        video.muted = true; // audio at 75× is not useful for scrubbing
+
+        virtualTime = video.currentTime;
+        lastFrameTs = performance.now();
+        rafId = requestAnimationFrame(loop);
+      }
+
+      function stopPlaybackLoop() {
+        playing = false;
+        playPauseBtn.textContent = "Play";
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+      }
+
+      function loop(now) {
+        if (!playing) return;
+
+        const dt = lastFrameTs == null ? 0 : (now - lastFrameTs) / 1000;
+        lastFrameTs = now;
+
+        // Advance our virtual playhead by real-time * speed
+        if (isFinite(video.duration) && video.duration > 0) {
+          virtualTime += dt * speed;
+
+          // Clamp to [0, duration]
+          if (virtualTime < 0) virtualTime = 0;
+          if (virtualTime > video.duration) {
+            virtualTime = video.duration;
+            // reached the end; stop playback
+            stopPlaybackLoop();
+          }
+        }
+
+        // Only seek the underlying video when necessary to avoid thrashing the decoder
+        const currentDiff = Math.abs(video.currentTime - virtualTime);
+        if (currentDiff > 0.03) {
+          video.currentTime = virtualTime;
+        }
+
+        // Draw current decoded frame if available.
+        // Browser + rAF are already vsynced with display refresh.
+        if (video.readyState >= 2) {
+          drawCurrentFrame();
+        }
+
+        updateSeekSliderFromVirtualTime();
+
+        rafId = requestAnimationFrame(loop);
+      }
+
+      function drawCurrentFrame() {
+        try {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        } catch (e) {
+          // Can happen during seeks before frame is ready; harmless.
+        }
+      }
+
+      // Start loading
+      video.load();
+    })();
+  </script>
+</body>
+</html>

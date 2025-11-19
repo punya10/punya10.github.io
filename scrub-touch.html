@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frame-Perfect Review Player</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --accent: #f59e0b; /* Amber for "Review/Focus" */
+            --text: #e2e8f0;
+            --range-track: #334155;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', monospace;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none; /* Prevent text selection during touch */
+        }
+        header {
+            padding: 1rem;
+            background: var(--panel);
+            border-bottom: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            z-index: 10;
+        }
+        .top-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+        h1 { margin: 0; font-size: 1.2rem; color: var(--accent); letter-spacing: 1px; white-space: nowrap; }
+        
+        /* Scrub Bar */
+        .scrub-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            padding: 5px 10px;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input[type=range] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: var(--range-track);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        
+        .controls { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+        input[type="text"] {
+            background: #0f172a; border: 1px solid #475569; color: white; padding: 4px 8px; border-radius: 4px; width: 200px; font-family: monospace; font-size: 0.8rem;
+        }
+        button {
+            background: #334155; color: #e2e8f0; border: 1px solid #475569; 
+            padding: 4px 10px; border-radius: 4px; cursor: pointer; font-weight: 600;
+            font-family: monospace;
+            font-size: 0.8rem;
+            transition: all 0.1s;
+        }
+        button:hover { background: #475569; color: #fff; }
+        button.active { background: var(--accent); color: #0f172a; border-color: var(--accent); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .speed-group {
+            display: flex;
+            gap: 2px;
+            background: rgba(0,0,0,0.2);
+            padding: 2px;
+            border-radius: 4px;
+        }
+
+        #container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 120px);
+        }
+        
+        #main-stage {
+            flex: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #020617;
+            overflow: hidden;
+            touch-action: none; /* Critical for gesture handling */
+        }
+        
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            pointer-events: none;
+            font-size: 0.85rem;
+            min-width: 140px;
+        }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .val { color: var(--accent); font-weight: bold; }
+
+        #gesture-overlay {
+            position: absolute;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 2rem; font-weight: bold; color: rgba(255,255,255,0.8);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        #log-panel {
+            width: 350px;
+            border-left: 1px solid #334155;
+            background: #0f172a;
+            display: flex;
+            flex-direction: column;
+            font-size: 0.8rem;
+        }
+        #log-header { padding: 8px; background: #1e293b; font-weight: bold; color: #94a3b8; border-bottom: 1px solid #334155; }
+        #logs { flex: 1; overflow-y: auto; padding: 8px; font-family: monospace; }
+        .log-entry { margin-bottom: 3px; padding-bottom: 3px; border-bottom: 1px solid #1e293b; word-break: break-all; }
+        .l-err { color: #ef4444; }
+        .l-suc { color: #22c55e; }
+        .l-wrn { color: #f59e0b; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="top-row">
+        <h1>REVIEW PLAYER</h1>
+        <div class="controls">
+            <input type="text" id="customUrl" placeholder="Paste Video URL here..." value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">
+            <button id="btnLoad">LOAD</button>
+            <div style="width: 1px; height: 20px; background: #475569; margin: 0 5px;"></div>
+            <button id="btnPlayPause">PLAY</button>
+            
+            <span style="color: #94a3b8; margin-left: 10px; font-size: 0.8rem;">Speed:</span>
+            <div class="speed-group">
+                <button onclick="setSpeed(1.0, this)" class="active" id="btnSpeed1">1x</button>
+                <button onclick="setSpeed(2.0, this)">2x</button>
+                <button onclick="setSpeed(4.0, this)">4x</button>
+            </div>
+            <div class="speed-group">
+                <button onclick="setSpeed(16.0, this)">16x</button>
+                <button onclick="setSpeed(32.0, this)">32x</button>
+                <button onclick="setSpeed(66.7, this)" style="color: #f59e0b;">67x</button>
+            </div>
+        </div>
+    </div>
+    <div class="scrub-container">
+        <span id="currentTimeDisplay">00:00</span>
+        <input type="range" id="scrubBar" value="0" min="0" max="100" step="0.1" disabled>
+        <span id="durationDisplay">00:00</span>
+    </div>
+</header>
+
+<div id="container">
+    <div id="main-stage">
+        <canvas id="videoCanvas"></canvas>
+        <div id="hud">
+            <div class="stat-row">State: <span id="statState" class="val">IDLE</span></div>
+            <div class="stat-row">Video Time: <span id="statTime" class="val">0.00s</span></div>
+            <div class="stat-row">Speed: <span id="statSpeed" class="val">1.0x</span></div>
+            <div class="stat-row">Buffered: <span id="statQueue" class="val">0</span></div>
+        </div>
+        <div id="gesture-overlay"></div>
+    </div>
+    <div id="log-panel">
+        <div id="log-header">PIPELINE LOGS</div>
+        <div id="logs"></div>
+    </div>
+</div>
+
+<script>
+// --- LOGGER ---
+const logs = document.getElementById('logs');
+function log(msg, type='') {
+    const d = document.createElement('div');
+    d.className = `log-entry ${type}`;
+    d.innerText = `[${new Date().toLocaleTimeString().split(' ')[0]}] ${msg}`;
+    logs.appendChild(d);
+    logs.scrollTop = logs.scrollHeight;
+    if(type==='l-err') console.error(msg);
+}
+
+// --- MAIN THREAD STATE ---
+const canvas = document.getElementById('videoCanvas');
+const offscreen = canvas.transferControlToOffscreen();
+let networkWorker, renderWorker;
+let videoDuration = 0;
+let isDraggingScrub = false;
+let currentPlaybackRate = 1.0;
+let isReadyToAutoplay = false;
+let isPlaying = false; // Fixed: Added missing variable
+
+// --- WORKERS ---
+
+const NETWORK_WORKER_CODE = `
+    let rendererPort;
+    let mp4boxfile;
+    let fileBuffer;
+    let trackId;
+
+    // Reliable shim for MP4Box atom writing
+    class SimpleDataStream {
+        constructor() {
+            this.buffer = new ArrayBuffer(65536);
+            this.view = new DataView(this.buffer);
+            this.position = 0;
+        }
+        writeUint8(v) { this.view.setUint8(this.position++, v); }
+        writeUint16(v) { this.view.setUint16(this.position, v, false); this.position+=2; } 
+        writeUint24(v) { 
+            this.view.setUint8(this.position, (v >> 16) & 0xFF);
+            this.view.setUint8(this.position+1, (v >> 8) & 0xFF);
+            this.view.setUint8(this.position+2, v & 0xFF);
+            this.position+=3; 
+        }
+        writeUint32(v) { this.view.setUint32(this.position, v, false); this.position+=4; }
+        writeUint64(v) { 
+            this.writeUint32(Math.floor(v / 4294967296));
+            this.writeUint32(v >>> 0);
+        }
+        writeUint8Array(arr) { 
+            new Uint8Array(this.buffer).set(arr, this.position); 
+            this.position += arr.length; 
+        }
+        writeString(str) {
+            for(let i=0; i<str.length; i++) {
+                this.view.setUint8(this.position++, str.charCodeAt(i));
+            }
+        }
+        writeInt8(v) { this.writeUint8(v); }
+        writeInt16(v) { this.writeUint16(v); }
+        writeInt32(v) { this.writeUint32(v); }
+        
+        getPosition() { return this.position; }
+        getBuffer() { return new Uint8Array(this.buffer, 0, this.position); }
+    }
+
+    self.onmessage = async (e) => {
+        const { type, url, time, port } = e.data;
+
+        if (type === 'INIT_PORT') {
+            rendererPort = port;
+            log('Port Connected');
+        } 
+        else if (type === 'LOAD') {
+            loadVideo(url);
+        }
+        else if (type === 'SEEK') {
+            performSeek(time);
+        }
+    };
+
+    function log(msg, type='info') { self.postMessage({ type: 'LOG', msg, level: type }); }
+
+    async function loadVideo(url) {
+        if (typeof MP4Box === 'undefined') return log('MP4Box not loaded!', 'l-err');
+
+        try {
+            log('Downloading video to RAM...', 'l-wrn');
+            const req = await fetch(url, { mode: 'cors' });
+            if (!req.ok) throw new Error(\`HTTP \${req.status} \${req.statusText}\`);
+            
+            fileBuffer = await req.arrayBuffer();
+            fileBuffer.fileStart = 0;
+            log(\`Download complete (\${(fileBuffer.byteLength/1024/1024).toFixed(1)} MB)\`, 'l-suc');
+            
+            // Signal download complete for auto-play
+            self.postMessage({ type: 'DOWNLOAD_COMPLETE' });
+
+            initDemuxer();
+        } catch(e) {
+            log('Download failed: ' + e, 'l-err');
+        }
+    }
+
+    function initDemuxer() {
+        if (mp4boxfile) mp4boxfile = null;
+        mp4boxfile = MP4Box.createFile();
+        
+        mp4boxfile.onError = (e) => log('MP4Box Error: ' + e, 'l-err');
+        mp4boxfile.onReady = (info) => {
+            const track = info.videoTracks[0];
+            if (!track) return log('No video track!', 'l-err');
+            
+            trackId = track.id;
+            self.postMessage({ type: 'META', duration: info.duration / info.timescale });
+
+            let description = null;
+            try {
+                const entry = mp4boxfile.getTrackById(trackId)?.mdia?.minf?.stbl?.stsd?.entries?.[0];
+                const box = entry?.avcC || entry?.hvcC || entry?.vpcC;
+                if (box) {
+                    const stream = new SimpleDataStream();
+                    box.write(stream);
+                    const raw = stream.getBuffer();
+                    if (raw.length > 8) {
+                        description = raw.slice(8);
+                    }
+                }
+            } catch(e) { 
+                log('Desc extraction warning: ' + e, 'l-wrn'); 
+            }
+
+            const config = {
+                codec: track.codec,
+                // Explicitly allow decoder to infer dimensions from SPS/PPS
+                hardwareAcceleration: 'prefer-hardware', 
+                description: description
+            };
+            
+            rendererPort.postMessage({ type: 'CONFIG', config });
+            
+            mp4boxfile.setExtractionOptions(trackId, 'video', { nbSamples: 1000 });
+            mp4boxfile.start();
+        };
+
+        mp4boxfile.onSamples = (id, user, samples) => {
+            for (const s of samples) {
+                const data = s.data.slice();
+                const chunk = {
+                    type: s.is_sync ? 'key' : 'delta',
+                    timestamp: s.cts * 1000000 / s.timescale,
+                    duration: s.duration * 1000000 / s.timescale,
+                    data: data
+                };
+                rendererPort.postMessage({ type: 'CHUNK', chunk }, [data.buffer]);
+            }
+        };
+
+        mp4boxfile.appendBuffer(fileBuffer);
+        mp4boxfile.flush();
+    }
+
+    function performSeek(timeSec) {
+        if(!mp4boxfile || !trackId) return;
+        rendererPort.postMessage({ type: 'RESET', time: timeSec });
+        const seekStep = mp4boxfile.seek(timeSec, true);
+        if(seekStep) mp4boxfile.start();
+    }
+`;
+
+const RENDER_WORKER_CODE = `
+    let canvas, ctx;
+    let decoder;
+    let frameQueue = [];
+    let isPlaying = false;
+    let videoTime = 0;
+    let playbackRate = 1.0;
+    let lastTick = 0;
+
+    function log(msg, type='') { self.postMessage({ type: 'LOG', msg, level: type }); }
+
+    self.onmessage = (e) => {
+        const { type, canvas: c, action, value } = e.data;
+
+        if (type === 'INIT') {
+            canvas = c;
+            ctx = canvas.getContext('2d', { desynchronized: true, alpha: false });
+            log('Renderer Ready');
+        }
+        else if (type === 'CONTROL') {
+            if (action === 'play') { isPlaying = true; lastTick = performance.now(); renderLoop(); }
+            else if (action === 'pause') isPlaying = false;
+            else if (action === 'rate') playbackRate = value;
+            else if (action === 'seek') {
+                 isPlaying = false; 
+                 videoTime = value;
+                 frameQueue = []; 
+                 if(decoder) decoder.reset();
+            }
+        }
+    };
+
+    let networkPort;
+    self.addEventListener('message', (e) => {
+        if (e.data.type === 'CONNECT_NETWORK') {
+            networkPort = e.data.port;
+            networkPort.onmessage = handleNetMsg;
+        }
+    });
+
+    function handleNetMsg(e) {
+        const msg = e.data;
+        if (msg.type === 'CONFIG') {
+            initDecoder(msg.config);
+        } 
+        else if (msg.type === 'CHUNK') {
+            if(decoder && decoder.state==='configured') {
+                try { decoder.decode(new EncodedVideoChunk(msg.chunk)); } 
+                catch(e) { log('Decode Err: '+e, 'l-err'); }
+            }
+        }
+        else if (msg.type === 'RESET') {
+            frameQueue = [];
+            if(decoder) decoder.reset();
+            videoTime = msg.time;
+        }
+    }
+
+    function initDecoder(config) {
+        if(decoder) try{decoder.close()}catch(e){}
+        
+        decoder = new VideoDecoder({
+            output: (frame) => {
+                frameQueue.push(frame);
+                frameQueue.sort((a,b) => a.timestamp - b.timestamp);
+            },
+            error: (e) => log('Decoder Err: '+e.message, 'l-err')
+        });
+        decoder.configure(config);
+        log('Decoder Configured', 'l-suc');
+    }
+
+    function renderLoop() {
+        if(!isPlaying) return;
+
+        const now = performance.now();
+        const dt = (now - lastTick) / 1000;
+        lastTick = now;
+
+        videoTime += dt * playbackRate;
+        const vTimeUs = videoTime * 1e6;
+        
+        let frameToDraw = null;
+        
+        while(frameQueue.length > 0) {
+            const frame = frameQueue[0];
+            
+            // Drop outdated
+            if (frame.timestamp < vTimeUs - 30000) {
+                frame.close();
+                frameQueue.shift();
+                continue;
+            }
+
+            // Future wait
+            if (frame.timestamp > vTimeUs) break;
+
+            // Valid. Check if next is better (fast forward optimization)
+            if (frameQueue.length > 1) {
+                const next = frameQueue[1];
+                if (next.timestamp <= vTimeUs) {
+                    frame.close(); 
+                    frameQueue.shift();
+                    continue;
+                }
+            }
+
+            frameToDraw = frame;
+            frameQueue.shift();
+            break;
+        }
+
+        if (frameToDraw) {
+            if(canvas.width !== frameToDraw.displayWidth) {
+                canvas.width = frameToDraw.displayWidth;
+                canvas.height = frameToDraw.displayHeight;
+            }
+            ctx.drawImage(frameToDraw, 0, 0);
+            frameToDraw.close();
+            
+            self.postMessage({ type: 'UPDATE_TIME', time: videoTime });
+        }
+
+        if (Math.random() < 0.05) {
+            self.postMessage({ type: 'STATS', queue: frameQueue.length });
+        }
+
+        requestAnimationFrame(renderLoop);
+    }
+`;
+
+// --- INITIALIZATION ---
+
+function createWorker(code) {
+    const blob = new Blob([code], { type: 'application/javascript' });
+    return new Worker(URL.createObjectURL(blob));
+}
+
+async function init() {
+    log('Downloading MP4Box...', 'l-wrn');
+    let lib = '';
+    try {
+        const r = await fetch('https://cdn.jsdelivr.net/npm/mp4box@0.5.2/dist/mp4box.all.min.js');
+        if (!r.ok) throw new Error(r.statusText);
+        lib = await r.text();
+        log('Library Ready', 'l-suc');
+    } catch(e) {
+        return log('Lib Download Failed: '+e, 'l-err');
+    }
+
+    const fullNetCode = lib + ";\n\n" + NETWORK_WORKER_CODE;
+    
+    networkWorker = createWorker(fullNetCode);
+    renderWorker = createWorker(RENDER_WORKER_CODE);
+
+    const channel = new MessageChannel();
+    networkWorker.postMessage({ type: 'INIT_PORT', port: channel.port1 }, [channel.port1]);
+    renderWorker.postMessage({ type: 'CONNECT_NETWORK', port: channel.port2 }, [channel.port2]);
+    renderWorker.postMessage({ type: 'INIT', canvas: offscreen }, [offscreen]);
+
+    networkWorker.onmessage = (e) => {
+        if (e.data.type === 'LOG') log(e.data.msg, e.data.level === 'l-err' ? 'l-err' : (e.data.level === 'l-suc' ? 'l-suc' : (e.data.level === 'l-wrn' ? 'l-wrn' : '')));
+        if (e.data.type === 'META') {
+            videoDuration = e.data.duration;
+            document.getElementById('scrubBar').max = videoDuration;
+            document.getElementById('durationDisplay').innerText = formatTime(videoDuration);
+            log(`Duration: ${videoDuration.toFixed(2)}s`);
+        }
+        if (e.data.type === 'DOWNLOAD_COMPLETE') {
+            log('Full video in RAM. Ready for instant scrubbing.', 'l-suc');
+            attemptAutoPlay();
+        }
+    };
+
+    renderWorker.onmessage = (e) => {
+        if (e.data.type === 'LOG') log(e.data.msg, e.data.level === 'l-err' ? 'l-err' : (e.data.level === 'l-suc' ? 'l-suc' : ''));
+        if (e.data.type === 'UPDATE_TIME') {
+            if (!isDraggingScrub) {
+                const t = e.data.time;
+                document.getElementById('scrubBar').value = t;
+                document.getElementById('currentTimeDisplay').innerText = formatTime(t);
+                if(isGesturing) document.getElementById('statTime').innerText = t.toFixed(2) + 's'; // Instant update during gesture
+            }
+        }
+        if (e.data.type === 'STATS') {
+            document.getElementById('statQueue').innerText = e.data.queue;
+        }
+    };
+
+    // Check for URL Params on Load
+    checkForAutoLoad();
+}
+
+// --- AUTO LOAD & PLAY LOGIC ---
+
+function checkForAutoLoad() {
+    let targetUrl = "";
+    
+    // Priority 1: Hash (index.html#http...)
+    if (window.location.hash) {
+        targetUrl = window.location.hash.substring(1); // Remove #
+    } 
+    // Priority 2: Query Param (index.html?url=http...)
+    else {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('url')) targetUrl = params.get('url');
+    }
+
+    if (targetUrl && targetUrl.startsWith('http')) {
+        document.getElementById('customUrl').value = targetUrl;
+        loadVideo(targetUrl);
+    }
+}
+
+function loadVideo(url) {
+    log(`Loading: ${url.substring(0,50)}...`);
+    networkWorker.postMessage({ type: 'LOAD', url });
+    document.getElementById('scrubBar').disabled = false;
+    isReadyToAutoplay = true;
+}
+
+function attemptAutoPlay() {
+    if (!isReadyToAutoplay) return;
+    
+    if (!document.hidden) {
+        log('Tab active. Auto-playing.', 'l-suc');
+        startPlayback();
+    } else {
+        log('Tab hidden. Waiting for focus to auto-play...', 'l-wrn');
+        const playOnVisible = () => {
+            if (!document.hidden) {
+                log('Tab focused. Auto-playing.', 'l-suc');
+                startPlayback();
+                document.removeEventListener('visibilitychange', playOnVisible);
+            }
+        };
+        document.addEventListener('visibilitychange', playOnVisible);
+    }
+}
+
+function startPlayback() {
+    if (!isPlaying) togglePlay();
+}
+
+// --- TOUCH CONTROLS ---
+const mainStage = document.getElementById('main-stage');
+const gestureOverlay = document.getElementById('gesture-overlay');
+
+let touchState = {
+    active: false,
+    startX: 0, startY: 0,
+    startTime: 0,
+    startRate: 1.0,
+    startVideoTime: 0,
+    mode: null, // 'hold', 'drag-x', 'drag-y'
+    longPressTimer: null,
+    tempBoostActive: false
+};
+
+let isGesturing = false;
+
+mainStage.addEventListener('pointerdown', (e) => {
+    if (!videoDuration) return;
+    e.preventDefault(); // Prevent scrolling
+    
+    touchState.active = true;
+    touchState.startX = e.clientX;
+    touchState.startY = e.clientY;
+    touchState.startTime = performance.now();
+    touchState.startRate = currentPlaybackRate;
+    touchState.startVideoTime = parseFloat(document.getElementById('scrubBar').value);
+    touchState.mode = 'hold';
+    touchState.tempBoostActive = false;
+
+    // Start timer for Static Hold (1.5x boost)
+    touchState.longPressTimer = setTimeout(() => {
+        if (touchState.active && touchState.mode === 'hold') {
+            // User hasn't moved much, trigger temp boost
+            touchState.tempBoostActive = true;
+            renderWorker.postMessage({ type: 'CONTROL', action: 'rate', value: currentPlaybackRate * 1.5 });
+            showOverlay(`⚡ ${ (currentPlaybackRate * 1.5).toFixed(1) }x`);
+        }
+    }, 200); // 200ms threshold
+});
+
+mainStage.addEventListener('pointermove', (e) => {
+    if (!touchState.active) return;
+
+    const dx = e.clientX - touchState.startX;
+    const dy = e.clientY - touchState.startY;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    // Threshold to switch from 'hold' to 'drag'
+    if (touchState.mode === 'hold' && (absDx > 10 || absDy > 10)) {
+        clearTimeout(touchState.longPressTimer);
+        
+        // If we were in temp boost, cancel it immediately
+        if (touchState.tempBoostActive) {
+            renderWorker.postMessage({ type: 'CONTROL', action: 'rate', value: touchState.startRate });
+            touchState.tempBoostActive = false;
+        }
+
+        // Determine Axis
+        if (absDx > absDy) touchState.mode = 'drag-x';
+        else touchState.mode = 'drag-y';
+    }
+
+    if (touchState.mode === 'drag-x') {
+        // Scrubbing: Mapping Width to 20% of video duration? Or simple velocity?
+        // Let's map full screen width = 60 seconds for precision control
+        const secondsPerPixel = 60 / window.innerWidth;
+        const timeShift = dx * secondsPerPixel;
+        let newTime = touchState.startVideoTime + timeShift;
+        newTime = Math.max(0, Math.min(videoDuration, newTime));
+        
+        // Don't commit seek constantly to worker (too heavy), update UI 
+        // Actually worker is RAM based, instant seek is fine.
+        renderWorker.postMessage({ type: 'CONTROL', action: 'seek', value: newTime });
+        // Also tell network worker to align demuxer state? Not strictly needed if we just reset renderer
+        // But for perfect scrubbing:
+        // Note: Network worker only needs SEEK msg if we need new chunks. 
+        // For RAM playback, just renderer reset is visuals.
+        
+        showOverlay(`↔ ${(newTime).toFixed(1)}s`);
+        
+        // Update Scrub Bar Visuals locally
+        document.getElementById('scrubBar').value = newTime;
+        isGesturing = true;
+    }
+
+    if (touchState.mode === 'drag-y') {
+        // Rate Change: Up (-dy) increases rate.
+        // Range: Map screen height to +/- 5x speed change
+        const height = window.innerHeight;
+        const rateChange = -(dy / height) * 10; // Sensitivity
+        let newRate = touchState.startRate + rateChange;
+        newRate = Math.max(0.1, Math.min(67, newRate)); // Clamp
+        
+        renderWorker.postMessage({ type: 'CONTROL', action: 'rate', value: newRate });
+        showOverlay(`🚀 ${newRate.toFixed(1)}x`);
+        
+        // Update Global Rate Variable
+        currentPlaybackRate = newRate;
+    }
+});
+
+mainStage.addEventListener('pointerup', (e) => {
+    endGesture();
+});
+mainStage.addEventListener('pointerleave', (e) => {
+    endGesture();
+});
+
+function endGesture() {
+    if (!touchState.active) return;
+    clearTimeout(touchState.longPressTimer);
+
+    // If we were doing a temp hold boost, revert
+    if (touchState.tempBoostActive) {
+        renderWorker.postMessage({ type: 'CONTROL', action: 'rate', value: touchState.startRate });
+        showOverlay(`Rate Reverted`);
+    }
+    
+    // If we were seeking, we need to ensure playback state is consistent
+    if (touchState.mode === 'drag-x') {
+        const finalTime = parseFloat(document.getElementById('scrubBar').value);
+        networkWorker.postMessage({ type: 'SEEK', time: finalTime });
+        // Resume playing if we were playing
+        if (isPlaying) renderWorker.postMessage({ type: 'CONTROL', action: 'play' });
+    }
+    
+    // If we were changing rate (drag-y), we KEEP the new rate. Update UI buttons.
+    if (touchState.mode === 'drag-y') {
+        // Optional: Highlight nearest speed button or show custom value
+        document.getElementById('statSpeed').innerText = currentPlaybackRate.toFixed(1) + 'x';
+    }
+
+    touchState.active = false;
+    isGesturing = false;
+    hideOverlay();
+}
+
+function showOverlay(text) {
+    gestureOverlay.innerText = text;
+    gestureOverlay.style.opacity = 1;
+}
+
+function hideOverlay() {
+    gestureOverlay.style.opacity = 0;
+}
+
+// --- UI CONTROLS ---
+
+document.getElementById('btnLoad').onclick = () => {
+    const url = document.getElementById('customUrl').value;
+    if (url) loadVideo(url);
+};
+
+document.getElementById('btnPlayPause').onclick = togglePlay;
+
+function togglePlay() {
+    isPlaying = !isPlaying;
+    renderWorker.postMessage({ 
+        type: 'CONTROL', 
+        action: isPlaying ? 'play' : 'pause' 
+    });
+    document.getElementById('btnPlayPause').innerText = isPlaying ? 'PAUSE' : 'PLAY';
+    document.getElementById('statState').innerText = isPlaying ? 'PLAYING' : 'PAUSED';
+}
+
+window.setSpeed = (val, btn) => {
+    currentPlaybackRate = val;
+    renderWorker.postMessage({ type: 'CONTROL', action: 'rate', value: val });
+    
+    document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    
+    document.getElementById('statSpeed').innerText = val + 'x';
+    log(`Speed set to ${val}x`);
+};
+
+const scrubBar = document.getElementById('scrubBar');
+scrubBar.onmousedown = () => { isDraggingScrub = true; };
+scrubBar.onmouseup = () => { 
+    isDraggingScrub = false; 
+    const t = parseFloat(scrubBar.value);
+    networkWorker.postMessage({ type: 'SEEK', time: t });
+    renderWorker.postMessage({ type: 'CONTROL', action: 'seek', value: t });
+    if(isPlaying) renderWorker.postMessage({ type: 'CONTROL', action: 'play' });
+};
+scrubBar.oninput = () => {
+    document.getElementById('currentTimeDisplay').innerText = formatTime(scrubBar.value);
+};
+
+function formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+}
+
+init();
+</script>
+</body>
+</html>
