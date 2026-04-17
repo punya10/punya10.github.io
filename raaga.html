@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raag Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0d0f;--bg2:#141418;--bg3:#1c1c22;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#e8e6df;--muted:#7a7870;
+  --accent:#c4832a;--accent2:#2ab89e;--gold:#e0b86a;
+  --meend:#c4832a;--vakra:#9b6fd4;--andolan:#e05c8a;--gamak:#4ab8d4;--kan:#7ac47a;
+  --serif:'Cormorant Garamond',Georgia,serif;--mono:'DM Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--serif);font-size:16px;overflow:hidden;height:100vh}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* ── SIDEBAR ── */
+.sidebar{width:260px;min-width:260px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh}
+.sidebar-head{padding:18px 16px 12px;border-bottom:1px solid var(--border)}
+.sidebar-head h1{font-size:20px;font-weight:300;letter-spacing:0.06em;color:var(--gold);line-height:1.2}
+.sidebar-head h1 span{display:block;font-size:10px;font-family:var(--mono);letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
+.search-wrap{padding:10px 12px;border-bottom:1px solid var(--border)}
+.search-wrap input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 10px;outline:none;transition:border-color .2s}
+.search-wrap input:focus{border-color:var(--accent)}
+.search-wrap input::placeholder{color:var(--muted)}
+.filter-tabs{display:flex;flex-wrap:wrap;gap:3px;padding:7px 12px;border-bottom:1px solid var(--border)}
+.ftab{font-family:var(--mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:12px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all .14s}
+.ftab.active,.ftab:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.raag-list{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.raag-item{display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;border-left:2px solid transparent;transition:all .14s}
+.raag-item:hover{background:var(--bg3)}
+.raag-item.active{background:var(--bg3);border-left-color:var(--accent)}
+.raag-item-text{flex:1;min-width:0}
+.raag-item-name{font-size:13px;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.raag-item-sub{font-size:9px;font-family:var(--mono);color:var(--muted);margin-top:1px}
+.fav-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:2px 4px;transition:all .14s;flex-shrink:0;line-height:1}
+.fav-btn:hover{color:var(--gold);transform:scale(1.2)}
+.fav-btn.faved{color:var(--gold)}
+.uncertain-dot{width:5px;height:5px;border-radius:50%;background:var(--muted);opacity:0.5;flex-shrink:0;title:"Ornament data approximate"}
+
+/* ── MAIN AREA ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{padding:10px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg);flex-shrink:0}
+.ctrl-group{display:flex;align-items:center;gap:5px}
+.ctrl-label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.1em}
+select{background:var(--bg3);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-family:var(--mono);font-size:11px;padding:5px 8px;outline:none;cursor:pointer;transition:border-color .2s}
+select:focus{border-color:var(--accent)}
+.tog-row{display:flex;gap:4px}
+.tog{font-family:var(--mono);font-size:9px;letter-spacing:0.07em;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all .14s}
+.tog.on-a{background:var(--accent);border-color:var(--accent);color:#fff}
+.tog.on-v{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.play-btn{font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;padding:6px 16px;border-radius:5px;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer;transition:all .16s;min-width:90px;text-align:center}
+.play-btn:hover:not(:disabled){background:var(--accent);color:var(--bg)}
+.play-btn:disabled{opacity:.4;cursor:not-allowed}
+.play-btn.paused{border-color:var(--gold);color:var(--gold)}
+.transport-row{padding:6px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;background:var(--bg)}
+.bpm-display{font-family:var(--mono);font-size:18px;font-weight:300;color:var(--gold);min-width:42px;text-align:right;line-height:1}
+.bpm-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.1em}
+.speed-btn{font-family:var(--mono);font-size:13px;width:24px;height:24px;border-radius:5px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;padding:0}
+.speed-btn:hover{border-color:var(--accent);color:var(--accent)}
+.metro-btn,.loop-btn{font-family:var(--mono);font-size:9px;letter-spacing:0.1em;padding:4px 11px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all .14s}
+.metro-btn.on{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.loop-btn.on{background:var(--vakra);border-color:var(--vakra);color:#fff}
+.mic-btn{font-size:14px;width:28px;height:28px;border-radius:50%;border:1px solid var(--border2);background:var(--bg3);cursor:pointer;transition:all .14s;display:flex;align-items:center;justify-content:center;padding:0}
+.mic-btn:hover{border-color:var(--accent2)}
+.mic-btn.active{border-color:#e05c8a;background:rgba(224,92,138,0.15);box-shadow:0 0 8px rgba(224,92,138,0.3)}
+.pitch-panel{border-top:1px solid var(--border);padding-top:14px;display:flex;flex-direction:column;gap:10px}
+.pitch-direction{font-family:var(--mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.dir-badge{padding:2px 10px;border-radius:12px;font-size:9px;letter-spacing:0.1em;font-weight:400}
+.dir-badge.aaroh{background:rgba(196,131,42,0.18);color:var(--accent);border:1px solid rgba(196,131,42,0.3)}
+.dir-badge.avaroh{background:rgba(42,184,158,0.15);color:var(--accent2);border:1px solid rgba(42,184,158,0.3)}
+.dir-badge.none{background:var(--bg3);color:var(--muted);border:1px solid var(--border2)}
+.score-bar-wrap{display:flex;align-items:center;gap:8px}
+.score-bar-track{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:3px;transition:width .3s,background .3s}
+.score-label{font-family:var(--mono);font-size:10px;min-width:30px;text-align:right}
+.note-correctness{display:flex;flex-wrap:wrap;gap:3px;min-height:22px}
+.nc-chip{font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:3px;letter-spacing:0.05em}
+.nc-correct{background:rgba(42,184,158,0.2);color:var(--accent2);border:1px solid rgba(42,184,158,0.3)}
+.nc-wrong{background:rgba(196,60,60,0.2);color:#e05c5c;border:1px solid rgba(196,60,60,0.3)}
+.nc-passing{background:rgba(196,131,42,0.15);color:var(--accent);border:1px solid rgba(196,131,42,0.25)}
+.nc-none{background:var(--bg3);color:var(--muted)}
+.note-chip.next-note .chip-inner{border-color:#2ab89e;box-shadow:0 0 6px rgba(42,184,158,0.5);color:#2ab89e}
+.metro-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .05s,transform .05s}
+.metro-dot.beat{background:var(--gold);transform:scale(1.5)}
+.metro-dot.offbeat{background:var(--accent2);transform:scale(1.2)}
+.hotkey-bar{padding:3px 20px 4px;display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:9px;color:var(--muted);border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg)}
+.hotkey-bar kbd{display:inline-block;background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:1px 4px;font-size:8px;color:var(--text);font-family:var(--mono);margin-right:2px}
+
+/* ── CONTENT AREA ── */
+.content-area{flex:1;display:flex;overflow:hidden;min-height:0}
+.wheel-col{flex:1;display:flex;flex-direction:column;align-items:center;padding:12px 8px 8px;overflow:hidden;min-width:0}
+.raag-title-display{text-align:center;margin-bottom:8px}
+.raag-title-display h2{font-size:24px;font-weight:300;letter-spacing:0.05em;color:var(--gold);line-height:1.1}
+.raag-title-display .deva{font-size:14px;color:var(--muted)}
+.raag-title-display .meta{font-family:var(--mono);font-size:9px;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;margin-top:2px}
+.wheel-wrap{position:relative;width:100%;max-width:500px}
+.wheel-wrap svg{display:block;width:100%}
+.wheel-wrap canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.note-bar{font-family:var(--mono);font-size:11px;color:var(--muted);min-height:16px;margin-top:4px;text-align:center;letter-spacing:0.05em;transition:color .1s}
+.note-bar.lit{color:var(--accent)}
+.spoke{stroke:rgba(255,255,255,0.09);stroke-width:0.5;transition:stroke .1s,stroke-width .1s}
+.spoke.raag-note{stroke:rgba(255,255,255,0.22)}
+.spoke.active{stroke:#e89030;stroke-width:3}
+.spoke.next-note-spoke{stroke:#00ffcc;stroke-width:4.5;transition:stroke .2s,stroke-width .2s;filter:drop-shadow(0 0 4px #00ffcc)}
+
+/* ── INFO PANEL ── */
+.info-panel{width:300px;min-width:260px;border-left:1px solid var(--border);padding:18px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;flex-shrink:0}
+.info-label{font-family:var(--mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.info-value{font-size:13px;font-weight:300;line-height:1.5}
+.note-chain{display:flex;flex-wrap:wrap;align-items:center;gap:2px;min-height:24px}
+.note-chip{display:inline-flex;flex-direction:column;align-items:center;position:relative}
+.note-chip .chip-inner{font-family:var(--serif);font-size:13px;font-weight:400;padding:2px 7px;border-radius:3px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);position:relative;line-height:1.3}
+.note-chip.vadi .chip-inner{border-color:var(--accent);color:var(--accent)}
+.note-chip.samvadi .chip-inner{border-color:var(--accent2);color:var(--accent2)}
+.note-chip.active .chip-inner{background:var(--accent);border-color:var(--accent);color:#fff}
+.orn-badge{position:absolute;top:-4px;right:-4px;width:7px;height:7px;border-radius:50%;border:1px solid var(--bg)}
+.conn{font-family:var(--mono);font-size:9px;display:flex;align-items:center;padding-bottom:3px}
+.conn.meend{color:var(--meend)}.conn.vakra{color:var(--vakra)}.conn.gamak{color:var(--gamak)}.conn.kan{color:var(--kan)}.conn.direct{color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:5px}
+.leg-item{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;color:var(--muted)}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.orn-tag{display:inline-block;font-family:var(--mono);font-size:8px;padding:1px 4px;border-radius:2px;margin:1px}
+.orn-meend{background:rgba(196,131,42,0.2);color:var(--meend)}
+.orn-andolan{background:rgba(224,92,138,0.2);color:var(--andolan)}
+.orn-gamak{background:rgba(74,184,212,0.2);color:var(--gamak)}
+.orn-kan{background:rgba(122,196,122,0.2);color:var(--kan)}
+.orn-vakra{background:rgba(155,111,212,0.2);color:var(--vakra)}
+.playlog{font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.9;min-height:30px;max-height:120px;overflow-y:auto}
+.uncertain-badge{display:inline-block;font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(122,122,122,0.15);color:var(--muted);margin-left:4px}
+@media(max-width:1100px){.info-panel{width:240px;min-width:200px}}
+@media(max-width:800px){.sidebar{width:200px;min-width:200px}.info-panel{display:none}}
+@media(max-width:580px){.sidebar{position:fixed;left:-200px;z-index:100;transition:left .25s}.sidebar.open{left:0}}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-head">
+    <h1><span>Hindustani</span>Raag Explorer</h1>
+  </div>
+  <div class="search-wrap">
+    <input type="text" id="search-input" placeholder="Search raags…" autocomplete="off">
+  </div>
+  <div class="filter-tabs">
+    <button class="ftab active" data-f="all">All</button>
+    <button class="ftab" data-f="fav">★</button>
+    <button class="ftab" data-f="morning">Dawn</button>
+    <button class="ftab" data-f="afternoon">Day</button>
+    <button class="ftab" data-f="evening">Dusk</button>
+    <button class="ftab" data-f="night">Night</button>
+    <button class="ftab" data-f="seasonal">Season</button>
+  </div>
+  <div class="raag-list" id="raag-list"></div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="ctrl-group">
+      <span class="ctrl-label">Sa =</span>
+      <select id="tonic-sel">
+        <option value="0">C</option><option value="1">C♯</option><option value="2">D</option>
+        <option value="3">D♯</option><option value="4">E</option><option value="5">F</option>
+        <option value="6">F♯</option><option value="7">G</option><option value="8">G♯</option>
+        <option value="9">A</option><option value="10">A♯</option><option value="11" selected>B</option>
+      </select>
+    </div>
+    <div class="tog-row">
+      <button class="tog on-a" id="btn-aaroh">Aaroh ↑</button>
+      <button class="tog on-v" id="btn-avaroh">Avaroh ↓</button>
+    </div>
+    <button class="play-btn" id="play-btn">▶ Play</button>
+  </div>
+  <div class="transport-row">
+    <button class="speed-btn" id="btn-slower" title="Slower ↓">−</button>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+      <div class="bpm-display" id="bpm-display">60</div>
+      <div class="bpm-label">BPM</div>
+    </div>
+    <button class="speed-btn" id="btn-faster" title="Faster ↑">+</button>
+    <button class="metro-btn" id="btn-metro">♩ Metro</button>
+    <div class="metro-dot" id="metro-dot"></div>
+    <button class="loop-btn" id="btn-loop">⟳ Loop</button>
+      <button class="loop-btn" id="btn-vocal-path" title="Toggle sung path highlight">● Path</button>
+      <button class="loop-btn" id="btn-next-note"  title="Toggle next note indicator">→ Next</button>
+    <div style="position:relative;display:inline-flex;align-items:center;gap:4px">
+      <button class="mic-btn" id="btn-mic" title="Microphone pitch tracking">🎤</button>
+      <select id="mic-select" style="display:none;font-size:10px;max-width:140px;padding:3px 6px"></select>
+    </div>
+    <div class="mic-label" id="mic-label" style="font-family:var(--mono);font-size:10px;color:var(--muted);min-width:80px"></div>
+  </div>
+  <div class="hotkey-bar">
+    <span><kbd>Space</kbd>play/pause</span>
+    <span><kbd>↑</kbd>faster</span>
+    <span><kbd>↓</kbd>slower</span>
+    <span><kbd>L</kbd>loop</span>
+    <span><kbd>M</kbd>metro</span>
+    <span><kbd>R</kbd>mic</span>
+  </div>
+  <div class="content-area">
+    <div class="wheel-col">
+      <div class="raag-title-display">
+        <h2 id="raag-name-display">—</h2>
+        <div class="deva" id="raag-deva-display"></div>
+        <div class="meta" id="raag-meta-display"></div>
+      </div>
+      <div class="wheel-wrap">
+        <svg id="wheel" viewBox="0 0 540 520">
+          <defs>
+            <marker id="arr-o" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#c4832a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <marker id="arr-t" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#2ab89e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+            <radialGradient id="cg" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#1c1c22"/>
+              <stop offset="100%" stop-color="#141418"/>
+            </radialGradient>
+          </defs>
+          <circle cx="270" cy="260" r="190" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
+          <circle cx="270" cy="260" r="132" fill="none" stroke="rgba(196,131,42,0.35)" stroke-width="1.2" stroke-dasharray="6 4"/>
+          <circle cx="270" cy="260" r="74"  fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
+          <text x="437" y="250" font-family="'DM Mono',monospace" font-size="8" fill="rgba(196,131,42,0.5)" letter-spacing="0.12em">AAROH ↑</text>
+          <text x="352" y="272" font-family="'DM Mono',monospace" font-size="8" fill="rgba(42,184,158,0.5)" letter-spacing="0.12em">AVAROH ↓</text>
+          <g id="spokes"></g>
+          <g id="labels"></g>
+          <g id="halos"></g>
+          <g id="andolan-marks"></g>
+          <circle cx="270" cy="260" r="52" fill="url(#cg)" stroke="rgba(255,255,255,0.07)" stroke-width="0.5"/>
+          <text id="center-name" x="270" y="256" text-anchor="middle" font-family="'Cormorant Garamond',serif" font-size="13" font-weight="300" fill="#e0b86a" letter-spacing="0.04em">—</text>
+          <text id="center-deva" x="270" y="272" text-anchor="middle" font-family="'Cormorant Garamond',serif" font-size="11" fill="rgba(255,255,255,0.3)"></text>
+        </svg>
+        <canvas id="tracer-canvas"></canvas>
+      </div>
+      <div class="note-bar" id="note-bar"></div>
+    </div>
+    <aside class="info-panel">
+      <div>
+        <div class="info-label">Ornament Legend</div>
+        <div class="legend">
+          <div class="leg-item"><div class="leg-dot" style="background:var(--meend)"></div>Meend</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--vakra)"></div>Vakra</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--andolan)"></div>Andolan</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--gamak)"></div>Gamak</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--kan)"></div>Kan</div>
+        </div>
+      </div>
+      <div>
+        <div class="info-label">Aaroh</div>
+        <div class="note-chain" id="chain-aaroh"></div>
+      </div>
+      <div>
+        <div class="info-label">Avaroh</div>
+        <div class="note-chain" id="chain-avaroh"></div>
+      </div>
+      <div>
+        <div class="info-label">Vadi / Samvadi</div>
+        <div id="info-vs"></div>
+      </div>
+      <div>
+        <div class="info-label">Thaat · Time</div>
+        <div class="info-value" id="info-thaat-time"></div>
+      </div>
+      <div>
+        <div class="info-label">Character</div>
+        <div class="info-value" style="font-size:12px;color:var(--muted);line-height:1.7" id="info-char"></div>
+      </div>
+      <div>
+        <div class="info-label">Live Log</div>
+        <div class="playlog" id="playlog"></div>
+      </div>
+      <div class="pitch-panel" id="pitch-panel" style="display:none">
+        <div class="info-label">Vocal Analysis</div>
+        <div class="pitch-direction">
+          <span id="dir-badge" class="dir-badge none">—</span>
+          <span id="dir-confidence" style="font-family:var(--mono);font-size:9px;color:var(--muted)"></span>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:0.1em">RAAG ACCURACY</div>
+          <div class="score-bar-wrap">
+            <div class="score-bar-track"><div class="score-bar-fill" id="score-bar" style="width:0%"></div></div>
+            <span class="score-label" id="score-pct" style="color:var(--muted)">—</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:0.1em">RECENT NOTES</div>
+          <div class="note-correctness" id="note-correctness"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+</div>
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// SARGAM CONSTANTS
+// ════════════════════════════════════════════════════════════════════════════
+const SARGAM      = ['SA','r','R','g','G','M','M̄','P','d','D','n','N'];
+const SARGAM_FULL = ['Sa','Komal Re','Shuddha Re','Komal Ga','Shuddha Ga',
+                     'Shuddha Ma','Tivra Ma','Pancham','Komal Dha',
+                     'Shuddha Dha','Komal Ni','Shuddha Ni'];
+const WESTERN     = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+
+// ── Ornament step helpers ────────────────────────────────────────────────────
+// d=direct, m=meend, k=kan, v=vakra, an=andolan, gm=gamak
+const d  = (s,dm=1.0)            => ({semi:s,ornament:'direct', dur_mult:dm});
+const m  = (s,dm=1.0,ad=false,depth=0.25) => ({semi:s,ornament:'meend',  dur_mult:dm,andolan:ad,andolan_depth:depth});
+const k  = (s,kan,dm=1.0)        => ({semi:s,ornament:'kan',   kan,dur_mult:dm});
+const v  = (s,via,dm=1.5)        => ({semi:s,ornament:'vakra', vakra_via:via,dur_mult:dm});
+const an = (s,dm=1.3,depth=0.25) => ({semi:s,ornament:'direct',dur_mult:dm,andolan:true,andolan_depth:depth});
+const gm = (s,pair,dm=1.0)       => ({semi:s,ornament:'direct',dur_mult:dm,gamak:true,gamak_pair:pair});
+// meend with andolan shorthand
+const ma = (s,dm=1.4,depth=0.25) => ({semi:s,ornament:'meend', dur_mult:dm,andolan:true,andolan_depth:depth});
+// ════════════════════════════════════════════════════════════════════════════
+// RAAG DATABASE — 87 raags
+// Each step: {semi, ornament, dur_mult, andolan, andolan_depth, kan, vakra_via, gamak, gamak_pair}
+// uncertain:true means aaroh/avaroh are accurate but ornament details are approximate
+// ════════════════════════════════════════════════════════════════════════════
+const RAAGS = [
+{name:'Abhogi',deva:'अभोगी',thaat:'Kafi',timecat:'night',time:'Night',vadi:2,samvadi:5,uncertain:true,
+ char:'Pentatonic raag omitting Pa and Ni. Light, pleasant character with folk quality.',
+ aaroh:[d(0),d(2),d(3),d(5),d(9),d(12)],
+ avaroh:[d(12),d(9),d(5),d(3),d(2),d(0)]},
+
+{name:'Adana',deva:'अदाना',thaat:'Asavari',timecat:'night',time:'Late night',vadi:2,samvadi:5,uncertain:false,
+ char:'A fierce, serious night raag from the Kanada family. Gamak is essential to its character.',
+ aaroh:[d(0),m(2),d(5),gm(7,5),d(10),gm(12,10)],
+ avaroh:[m(12),d(10),v(9,[7,9,7]),m(5),v(3,[5,3]),m(2),d(0)]},
+
+{name:'Ahir Bhairav',deva:'अहीर भैरव',thaat:'Bhairav',timecat:'morning',time:'Morning',vadi:5,samvadi:2,uncertain:false,
+ char:'A hybrid of Bhairav and Kafi. The komal Re from Bhairav contrasts with the shuddha Ga from Kafi, creating a unique bittersweet morning quality.',
+ aaroh:[d(0),ma(1,1.3),d(4),m(5),m(7),d(9),m(11),d(12)],
+ avaroh:[m(12),d(11),d(9),m(7),m(5),d(4),ma(1,1.4),d(0)]},
+
+{name:'Alhaiya Bilawal',deva:'अलहैया बिलावल',thaat:'Bilawal',timecat:'morning',time:'Morning',vadi:9,samvadi:3,uncertain:false,
+ char:'A morning raag of the Bilawal family. Uses both Ma (shuddha in ascent, sometimes tivra in descent) giving it breadth and warmth.',
+ aaroh:[d(0),d(2),d(4),m(5),m(7),d(9),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),v(7,[6,7]),m(5),d(4),d(2),d(0)]},
+
+{name:'Asavari',deva:'आसावरी',thaat:'Asavari',timecat:'morning',time:'Late morning',vadi:8,samvadi:2,uncertain:false,
+ char:'A stately, melancholic raag. Its komal Ga, Dha and Ni in descent give it a dignified sorrow. Often described as a queen in austere contemplation.',
+ aaroh:[d(0),d(2),m(5),m(7),d(8),d(12)],
+ avaroh:[m(12),d(10),d(8),m(7),m(5),d(3),m(2),d(0)]},
+
+{name:'Bageshri',deva:'बागेश्री',thaat:'Kafi',timecat:'night',time:'Late night',vadi:5,samvadi:2,uncertain:false,
+ char:'Evocative of longing and separation. The languid phrases and komal Ni create an atmosphere of melancholic beauty, a lover waiting at night.',
+ aaroh:[d(0),d(2),ma(3,1.2),m(5),d(7),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),m(7),m(5),ma(3,1.3),m(2),d(0)]},
+
+{name:'Bageshri Kauns',deva:'बागेश्री कौंस',thaat:'Kafi',timecat:'night',time:'Night',vadi:5,samvadi:2,uncertain:true,
+ char:'A blend of Bageshri and Malkauns characteristics. Deeply contemplative.',
+ aaroh:[d(0),d(2),d(3),d(5),d(8),d(10),d(12)],
+ avaroh:[d(12),d(10),d(8),d(5),d(3),d(2),d(0)]},
+
+{name:'Bahaar',deva:'बहार',thaat:'Kafi',timecat:'seasonal',time:'Spring season',vadi:5,samvadi:2,uncertain:false,
+ char:'The raag of spring, joyful and celebratory. Its gamak-laden phrases evoke blossoming and freshness. Often paired with Bahar compositions.',
+ aaroh:[d(0),gm(2,0),d(3),gm(5,3),m(7),d(10),gm(12,10)],
+ avaroh:[d(12),d(10),d(9),m(7),m(5),d(3),v(2,[3,2]),d(0)]},
+
+{name:'Basant',deva:'बसंत',thaat:'Purvi',timecat:'seasonal',time:'Spring season',vadi:6,samvadi:1,uncertain:false,
+ char:'A raag of spring festivity, associated with the Holi season. Its use of both Ma forms and komal Re and Dha gives it a distinctive, festive colour.',
+ aaroh:[d(0),m(1),v(6,[4,6]),m(8),d(11),d(12)],
+ avaroh:[d(12),d(11),m(8),v(6,[8,6]),m(4),m(1),d(0)]},
+
+{name:'Bhairav',deva:'भैरव',thaat:'Bhairav',timecat:'morning',time:'Early morning (dawn)',vadi:8,samvadi:2,uncertain:false,
+ char:'The foundational morning raag, solemn and devotional. Komal Re and komal Dha frame a serene, austere landscape evoking the stillness before sunrise.',
+ aaroh:[d(0),ma(1,1.3,0.3),d(4),m(5),m(7),ma(8,1.3,0.3),d(11),d(12)],
+ avaroh:[d(12),d(11),ma(8,1.3,0.3),m(7),m(5),d(4),ma(1,1.4,0.3),d(0)]},
+
+{name:'Bhairavi',deva:'भैरवी',thaat:'Bhairavi',timecat:'morning',time:'Morning (valedictory)',vadi:5,samvadi:2,uncertain:false,
+ char:'Traditionally the closing raag of a concert, using all five komal notes. A profound sense of farewell and completeness — bittersweet and universal.',
+ aaroh:[d(0),m(1),d(3),m(5),m(7),d(8),m(10),d(12)],
+ avaroh:[d(12),m(10),d(8),m(7),m(5),d(3),m(1),d(0)]},
+
+{name:'Bhatiyar',deva:'भटियार',thaat:'Marwa',timecat:'morning',time:'Pre-dawn',vadi:6,samvadi:2,uncertain:true,
+ char:'A rare pre-dawn raag of the Marwa family. Austere and contemplative with a very specific melodic character.',
+ aaroh:[d(0),d(1),d(4),m(6),d(7),d(11),d(12)],
+ avaroh:[d(12),d(11),d(7),m(6),d(4),m(1),d(0)]},
+
+{name:'Bhimpalas',deva:'भीमपलासी',thaat:'Kafi',timecat:'afternoon',time:'Afternoon',vadi:5,samvadi:2,uncertain:false,
+ char:'A raag of deep feeling and tenderness. The flattened Ni and Ga give it a particularly introspective quality, popular in both classical and semi-classical music.',
+ aaroh:[d(0),m(3),m(5),m(7),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),m(7),m(5),d(4),ma(3,1.3),m(2),d(0)]},
+
+{name:'Bhoop',deva:'भूप',thaat:'Kalyan',timecat:'evening',time:'Evening',vadi:2,samvadi:5,uncertain:false,
+ char:'A bright, auspicious pentatonic raag. One of the most accessible raags — its five notes (Sa Re Ga Pa Dha) produce an immediately appealing, open sound.',
+ aaroh:[d(0),d(2),d(4),d(7),d(9),d(12)],
+ avaroh:[d(12),d(9),d(7),d(4),d(2),d(0)]},
+
+{name:'Bhoopal Todi',deva:'भूपाल तोड़ी',thaat:'Todi',timecat:'morning',time:'Morning',vadi:1,samvadi:5,uncertain:true,
+ char:'A pentatonic form of Todi. Retains the dense komal character of Todi in a more compact structure.',
+ aaroh:[d(0),d(1),d(3),d(7),d(8),d(12)],
+ avaroh:[d(12),d(8),d(7),d(3),d(1),d(0)]},
+
+{name:'Bibhas',deva:'विभास',thaat:'Bhairav',timecat:'morning',time:'Early morning',vadi:8,samvadi:1,uncertain:true,
+ char:'A very early morning raag, austere and meditative. Close to Bhairav in character but with a distinctive note selection.',
+ aaroh:[d(0),d(1),d(4),d(7),d(8),d(12)],
+ avaroh:[d(12),d(8),d(7),d(4),d(1),d(0)]},
+
+{name:'Bihag',deva:'बिहाग',thaat:'Bilawal',timecat:'night',time:'Night',vadi:7,samvadi:4,uncertain:false,
+ char:'A romantic and melodious night raag. Both Ma forms appear in specific contexts, giving Bihag its characteristic richness and lyricism.',
+ aaroh:[d(0),k(4,2),m(5),k(7,6),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),m(7),v(6,[7,6]),m(5),d(4),d(2),d(0)]},
+
+{name:'Bilaskhani Todi',deva:'बिलासखानी तोड़ी',thaat:'Todi',timecat:'morning',time:'Late morning',vadi:1,samvadi:5,uncertain:false,
+ char:'Created by Bilas Khan, son of Tansen. Similar to Todi but uses shuddha Ni instead of komal, and has a characteristically plaintive, yearning quality.',
+ aaroh:[d(0),ma(1,1.3),d(3),m(6),m(7),ma(8,1.2),d(11),d(12)],
+ avaroh:[d(12),d(11),d(8),m(7),m(6),d(3),ma(1,1.4),d(0)]},
+
+{name:'Brindavani Sarang',deva:'वृंदावनी सारंग',thaat:'Kafi',timecat:'afternoon',time:'Afternoon',vadi:2,samvadi:5,uncertain:false,
+ char:'Evocative of Brindavan and the pastoral world of Krishna. A light, joyful Sarang with both Ni forms — komal in ascent, shuddha in descent.',
+ aaroh:[d(0),d(2),m(5),d(7),d(10),d(12)],
+ avaroh:[d(12),d(11),d(7),m(5),d(2),d(0)]},
+
+{name:'Chandrakauns',deva:'चंद्रकौंस',thaat:'Bhairavi',timecat:'night',time:'Night',vadi:5,samvadi:2,uncertain:false,
+ char:'A pentatonic night raag combining elements of Chandrakauns and Malkauns. Deeply meditative, hypnotic in its simplicity.',
+ aaroh:[d(0),d(3),m(5),d(8),d(10),d(12)],
+ avaroh:[d(12),d(10),d(8),m(5),d(3),d(0)]},
+
+{name:'Charukeshi',deva:'चारुकेशी',thaat:'Bilawal',timecat:'evening',time:'Any time',vadi:5,samvadi:2,uncertain:false,
+ char:'A raag of South Indian origin (Charukesi in Carnatic). Unusual combination of shuddha Ga with komal Ni and komal Dha gives it a bittersweet universality.',
+ aaroh:[d(0),d(2),d(4),m(5),m(7),d(8),d(10),d(12)],
+ avaroh:[d(12),d(10),d(8),m(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Chhayanat',deva:'छायानट',thaat:'Kalyan',timecat:'night',time:'Night',vadi:7,samvadi:2,uncertain:false,
+ char:'A majestic, expansive night raag. Its characteristic vakra movements and the use of both Ma forms give it a grand, ornate quality suited to dhrupad.',
+ aaroh:[d(0),d(2),v(4,[2,4]),m(6),m(7),d(9),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),m(7),v(6,[7,6]),m(5),d(4),d(2),d(0)]},
+
+{name:'Darbari Kanada',deva:'दरबारी कानड़ा',thaat:'Asavari',timecat:'night',time:'Deep night',vadi:2,samvadi:5,uncertain:false,
+ char:"Created for Emperor Akbar's court by Tansen. Embodies regal gravitas. The signature oscillating komal Ga is among the most recognisable gestures in Hindustani music.",
+ aaroh:[d(0),m(2),m(5),m(7),v(3,[5,3]),m(5),m(7),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),m(7),v(3,[5,3,5,3]),m(5),v(1,[3,1]),d(0)]},
+
+{name:'Desh',deva:'देश',thaat:'Khamaj',timecat:'night',time:'Evening/Night',vadi:2,samvadi:5,uncertain:false,
+ char:'A popular, folk-flavoured raag. Light and accessible, often used in thumri and film music. Both Ni forms used — komal in ascent, shuddha in descent.',
+ aaroh:[d(0),d(2),m(4),m(5),d(7),d(10),d(12)],
+ avaroh:[d(12),d(11),d(9),m(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Deshkar',deva:'देशकार',thaat:'Bilawal',timecat:'morning',time:'Morning',vadi:9,samvadi:3,uncertain:false,
+ char:'Similar to Bhoop but from the Bilawal thaat. A bright, peaceful morning raag with a particularly clean, unadorned character.',
+ aaroh:[d(0),d(2),d(4),d(7),d(9),d(12)],
+ avaroh:[d(12),d(9),d(7),d(4),d(2),d(0)]},
+
+{name:'Desi',deva:'देसी',thaat:'Asavari',timecat:'afternoon',time:'Afternoon',vadi:8,samvadi:2,uncertain:true,
+ char:'A folk-inflected raag with a rustic, earthy quality. Uses komal Ga and Dha with both Ni forms in specific contexts.',
+ aaroh:[d(0),d(2),d(4),m(5),m(7),d(8),d(12)],
+ avaroh:[d(12),d(10),d(8),m(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Dhani',deva:'धानी',thaat:'Kafi',timecat:'night',time:'Night',vadi:2,samvadi:5,uncertain:true,
+ char:'A pentatonic raag related to Bhimpalas. Gentle and introspective, associated with rainfall and nature.',
+ aaroh:[d(0),d(2),d(5),d(7),d(10),d(12)],
+ avaroh:[d(12),d(10),d(7),d(5),d(2),d(0)]},
+
+{name:'Durga',deva:'दुर्गा',thaat:'Bilawal',timecat:'night',time:'Night',vadi:2,samvadi:5,uncertain:false,
+ char:'A light, cheerful pentatonic raag with folk character. Named after the goddess Durga, it carries a spirited, celebratory energy.',
+ aaroh:[d(0),d(2),m(5),m(7),d(9),d(12)],
+ avaroh:[d(12),d(9),m(7),m(5),d(2),d(0)]},
+
+{name:'Gaud Malhar',deva:'गौड़ मल्हार',thaat:'Kafi',timecat:'seasonal',time:'Rainy season',vadi:5,samvadi:2,uncertain:true,
+ char:'A monsoon raag combining Gaud and Malhar elements. Particularly associated with the joy of rain.',
+ aaroh:[d(0),d(2),d(5),d(7),d(9),d(12)],
+ avaroh:[d(12),d(10),d(9),d(7),d(5),d(2),d(0)]},
+
+{name:'Gaud Sarang',deva:'गौड़ सारंग',thaat:'Bilawal',timecat:'afternoon',time:'Afternoon',vadi:2,samvadi:5,uncertain:true,
+ char:'An afternoon raag from the Sarang family with Gaud character. Bright and expansive.',
+ aaroh:[d(0),d(2),m(4),m(5),d(7),d(9),d(12)],
+ avaroh:[d(12),d(9),d(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Gorakh Kalyan',deva:'गोरख कल्याण',thaat:'Kalyan',timecat:'evening',time:'Evening',vadi:9,samvadi:2,uncertain:true,
+ char:'A lesser-performed evening raag of the Kalyan family. Gentle and contemplative.',
+ aaroh:[d(0),d(2),d(4),d(6),d(7),d(9),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),d(7),d(6),d(4),d(2),d(0)]},
+
+{name:'Gujari Todi',deva:'गुजरी तोड़ी',thaat:'Todi',timecat:'morning',time:'Morning',vadi:1,samvadi:5,uncertain:false,
+ char:'A variant of Todi associated with the Gujari style. Similar density of komal notes but with a slightly different emotional character — more contemplative than intense.',
+ aaroh:[d(0),ma(1,1.3),d(3),m(6),m(7),ma(8,1.2),d(11),d(12)],
+ avaroh:[d(12),d(11),d(8),m(7),m(6),v(3,[6,3]),ma(1,1.4),d(0)]},
+
+{name:'Gunakali',deva:'गुणकली',thaat:'Bhairav',timecat:'morning',time:'Early morning',vadi:8,samvadi:1,uncertain:false,
+ char:'A pentatonic raag using komal Re, Ga, Dha — deeply austere and meditative. One of the most stripped-down morning raags.',
+ aaroh:[d(0),d(1),d(4),d(7),d(8),d(12)],
+ avaroh:[d(12),d(8),d(7),d(4),d(1),d(0)]},
+
+{name:'Hamir',deva:'हामीर',thaat:'Kalyan',timecat:'evening',time:'Night',vadi:5,samvadi:2,uncertain:false,
+ char:'A grand, full-throated raag of the Kalyan family. Uses both Ma forms in specific vakra movements, giving it unusual harmonic breadth.',
+ aaroh:[d(0),d(2),d(4),m(5),v(7,[6,7]),d(9),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),v(7,[6,7]),m(5),d(4),d(2),d(0)]},
+
+{name:'Hansdhwani',deva:'हंसध्वनि',thaat:'Bilawal',timecat:'night',time:'Night',vadi:7,samvadi:2,uncertain:false,
+ char:'A graceful pentatonic raag of South Indian origin fully adopted into the Hindustani repertoire. Light, joyful, and auspicious.',
+ aaroh:[d(0),d(2),d(4),d(7),d(11),d(12)],
+ avaroh:[d(12),d(11),d(7),d(4),d(2),d(0)]},
+
+{name:'Hindol',deva:'हिंडोल',thaat:'Kalyan',timecat:'morning',time:'Morning',vadi:6,samvadi:2,uncertain:false,
+ char:'One of the six principal raags in the classical system. Pentatonic (no Sa and no Pa), giving it a floating, swinging quality. Deeply joyful.',
+ aaroh:[d(2),d(4),d(6),d(9),d(11),d(14)],
+ avaroh:[d(14),d(11),d(9),d(6),d(4),d(2)]},
+
+{name:'Jaijaiwanti',deva:'जैजैवंती',thaat:'Khamaj',timecat:'night',time:'Night',vadi:2,samvadi:5,uncertain:false,
+ char:'A beloved, expansive night raag. Uses both Ga and Ni forms — the contrast between komal and shuddha versions gives it a particularly rich, searching quality.',
+ aaroh:[d(0),d(2),d(4),v(5,[4,5]),d(7),d(10),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),d(7),v(5,[4,5,4]),d(3),d(2),d(0)]},
+
+{name:'Jaunpuri',deva:'जौनपुरी',thaat:'Asavari',timecat:'morning',time:'Morning',vadi:8,samvadi:2,uncertain:false,
+ char:'A stately and melancholic morning raag. The komal Ga in descent creates a sense of dignified sorrow, often likened to a morning prayer.',
+ aaroh:[d(0),d(2),m(5),m(7),d(8),d(12)],
+ avaroh:[d(12),d(10),d(8),m(7),m(5),d(3),m(2),d(0)]},
+
+{name:'Jhinjoti',deva:'झिंझोटी',thaat:'Khamaj',timecat:'night',time:'Night',vadi:2,samvadi:5,uncertain:false,
+ char:'A light, pleasant raag with a sweet, accessible character. Used widely in light classical and thumri styles. Both Ni forms appear.',
+ aaroh:[d(0),d(2),d(4),m(5),d(7),d(9),d(10),d(12)],
+ avaroh:[d(12),d(11),d(9),m(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Jog',deva:'जोग',thaat:'Kafi',timecat:'night',time:'Night',vadi:5,samvadi:2,uncertain:false,
+ char:'A haunting, unusual raag that uses both Ga forms (komal and shuddha) in sequence. Creates a distinctive ambiguity that feels otherworldly.',
+ aaroh:[d(0),d(3),d(4),m(5),d(7),d(10),d(12)],
+ avaroh:[d(12),d(10),d(7),m(5),d(4),d(3),d(0)]},
+
+{name:'Jogiya',deva:'जोगिया',thaat:'Bhairav',timecat:'morning',time:'Early morning',vadi:1,samvadi:5,uncertain:false,
+ char:'A deeply austere morning raag evoking an ascetic yogi. Komal Re and Dha with shuddha Ga create a particularly sparse, other-worldly atmosphere.',
+ aaroh:[d(0),ma(1,1.2),d(4),m(5),m(7),d(8),d(12)],
+ avaroh:[d(12),d(8),m(7),m(5),d(4),ma(1,1.3),d(0)]},
+
+{name:'Kafi',deva:'काफी',thaat:'Kafi',timecat:'evening',time:'Evening',vadi:5,samvadi:2,uncertain:false,
+ char:'The parent thaat raag of the Kafi family. Light, earthy, and folk-inflected. Komal Ga and Ni give it a characteristic intimacy.',
+ aaroh:[d(0),d(2),d(3),d(5),d(7),d(9),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),d(7),d(5),d(3),d(2),d(0)]},
+
+{name:'Kalavati',deva:'कलावती',thaat:'Bilawal',timecat:'night',time:'Night',vadi:5,samvadi:2,uncertain:false,
+ char:'A pentatonic raag of simple, pure character. Omits Re and Dha. Its sparse structure creates an open, meditative quality.',
+ aaroh:[d(0),d(4),m(5),d(7),d(11),d(12)],
+ avaroh:[d(12),d(11),d(7),m(5),d(4),d(0)]},
+
+{name:'Kalingda',deva:'कलिंगड़ा',thaat:'Bilawal',timecat:'morning',time:'Morning',vadi:9,samvadi:3,uncertain:true,
+ char:'A morning raag related to Bilawal. Bright and clear with a folk quality.',
+ aaroh:[d(0),d(2),d(4),d(5),d(7),d(9),d(12)],
+ avaroh:[d(12),d(9),d(7),d(5),d(4),d(2),d(0)]},
+
+{name:'Kamod',deva:'कामोद',thaat:'Kalyan',timecat:'evening',time:'Night',vadi:7,samvadi:2,uncertain:false,
+ char:'A romantic, expansive night raag of the Kalyan family. Its characteristic vakra movements around Pa give it an elusive, circling quality.',
+ aaroh:[d(0),d(2),d(4),m(5),v(7,[4,7]),d(9),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),v(7,[9,7]),m(5),d(4),d(2),d(0)]},
+
+{name:'Kaushi Kanada',deva:'कौशी कानड़ा',thaat:'Asavari',timecat:'night',time:'Night',vadi:5,samvadi:2,uncertain:true,
+ char:'A night raag from the Kanada family with a deep, serious character. Uses gamak extensively.',
+ aaroh:[d(0),d(2),d(5),d(7),gm(10,8),d(12)],
+ avaroh:[d(12),gm(10,8),d(9),d(7),d(5),d(3),d(2),d(0)]},
+
+{name:'Kedar',deva:'केदार',thaat:'Kalyan',timecat:'night',time:'Night',vadi:5,samvadi:2,uncertain:false,
+ char:'Devotional and meditative, associated with Lord Shiva and temple music. Uses both Ma forms lending it a distinctive grandeur.',
+ aaroh:[d(0),m(5),d(6),m(5),m(7),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),m(7),d(6),m(5),d(4),d(2),d(0)]},
+
+{name:'Khamaj',deva:'खमाज',thaat:'Khamaj',timecat:'night',time:'Evening/Night',vadi:5,samvadi:2,uncertain:false,
+ char:'Light and playful in character, a favourite for thumri. The komal Ni in descent gives it a folk-inflected warmth.',
+ aaroh:[d(0),d(2),d(4),m(5),m(7),d(9),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),m(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Kirvani',deva:'किरवानी',thaat:'Bhairavi',timecat:'night',time:'Night',vadi:5,samvadi:2,uncertain:false,
+ char:'A raag of South Indian origin (Kiravani in Carnatic). The distinctive combination of komal Ga, shuddha Pa, komal Dha creates a flamenco-like intensity.',
+ aaroh:[d(0),d(2),d(3),m(5),m(7),d(8),d(11),d(12)],
+ avaroh:[d(12),d(11),d(8),m(7),m(5),d(3),d(2),d(0)]},
+
+{name:'Komal Rishabh Asavari',deva:'कोमल ऋषभ आसावरी',thaat:'Asavari',timecat:'morning',time:'Morning',vadi:8,samvadi:2,uncertain:true,
+ char:'A variant of Asavari with emphasis on komal Re. More introspective than standard Asavari.',
+ aaroh:[d(0),d(1),m(5),m(7),d(8),d(12)],
+ avaroh:[d(12),d(10),d(8),m(7),m(5),d(3),m(1),d(0)]},
+
+{name:'Lalit',deva:'ललित',thaat:'Purvi',timecat:'morning',time:'Pre-dawn',vadi:1,samvadi:6,uncertain:false,
+ char:'An enigmatic pre-dawn raag using both Ma forms. The juxtaposition of tivra and shuddha Ma creates an unusual harmonic richness full of longing and anticipation.',
+ aaroh:[d(0),ma(1,1.2),d(4),d(6),m(5),d(6),d(8),d(11),d(12)],
+ avaroh:[d(12),d(11),d(8),d(6),m(5),d(6),d(4),ma(1,1.3),d(0)]},
+
+{name:'Madhmad Sarang',deva:'मधमाद सारंग',thaat:'Kafi',timecat:'afternoon',time:'Afternoon',vadi:2,samvadi:5,uncertain:true,
+ char:'An afternoon Sarang raag with a light, bright character.',
+ aaroh:[d(0),d(2),m(5),d(7),d(10),d(12)],
+ avaroh:[d(12),d(10),d(7),m(5),d(2),d(0)]},
+
+{name:'Madhuvanti',deva:'मधुवंती',thaat:'Todi',timecat:'evening',time:'Evening',vadi:1,samvadi:5,uncertain:false,
+ char:'A relatively modern raag combining Todi and Multani characteristics. The tivra Ma combined with komal Re and Ga creates an unusual, striking character.',
+ aaroh:[d(0),d(1),d(3),d(6),d(7),d(11),d(12)],
+ avaroh:[d(12),d(11),d(7),d(6),d(3),d(1),d(0)]},
+
+{name:'Malkauns',deva:'मालकौंस',thaat:'Bhairavi',timecat:'night',time:'Deep night',vadi:5,samvadi:2,uncertain:false,
+ char:'A stately and powerful pentatonic raag (no Re, no Pa) of ancient lineage. Deep, introspective, and majestic — often described as a warrior at rest.',
+ aaroh:[d(0),d(3),m(5),d(8),d(10),d(12)],
+ avaroh:[d(12),d(10),d(8),m(5),d(3),d(0)]},
+
+{name:'Mand',deva:'माँड',thaat:'Bilawal',timecat:'night',time:'Night',vadi:9,samvadi:3,uncertain:true,
+ char:'A folk raag from Rajasthan. Light, festive, and accessible — often used at celebrations.',
+ aaroh:[d(0),d(2),d(4),m(5),d(7),d(9),d(12)],
+ avaroh:[d(12),d(9),d(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Maru Bihag',deva:'मारू बिहाग',thaat:'Kalyan',timecat:'night',time:'Night',vadi:7,samvadi:4,uncertain:false,
+ char:'A combination of Marwa and Bihag characteristics. Uses both Ma forms. The interplay between shuddha and tivra Ma gives it a particularly complex, expressive quality.',
+ aaroh:[d(0),d(2),d(4),v(6,[5,6]),m(7),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),m(7),d(6),m(5),d(4),d(2),d(0)]},
+
+{name:'Marwa',deva:'मारवा',thaat:'Marwa',timecat:'evening',time:'Late afternoon/Dusk',vadi:1,samvadi:9,uncertain:false,
+ char:'Notably absent of Pancham, Marwa has an otherworldly suspended quality. The komal Re and tivra Ma create a sound unlike any other — tense, searching, restless.',
+ aaroh:[d(0),ma(1,1.2),d(4),m(6),d(9),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),m(6),d(4),ma(1,1.3),d(0)]},
+
+{name:'Megh',deva:'मेघ',thaat:'Kafi',timecat:'seasonal',time:'Rainy season',vadi:2,samvadi:5,uncertain:false,
+ char:'One of the six principal raags. Pentatonic, associated with the monsoon clouds. Serious and stately despite its folk origins.',
+ aaroh:[d(0),d(2),m(5),d(7),d(10),d(12)],
+ avaroh:[d(12),d(10),d(7),d(5),m(4),d(2),d(0)]},
+
+{name:'Megh Malhar',deva:'मेघ मल्हार',thaat:'Kafi',timecat:'seasonal',time:'Rainy season',vadi:2,samvadi:5,uncertain:true,
+ char:'A combination of Megh and Malhar, evoking monsoon rain clouds. Used in the rainy season.',
+ aaroh:[d(0),d(2),m(5),d(7),d(9),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),d(7),m(5),d(2),d(0)]},
+
+{name:'Miya ki Malhaar',deva:'मियाँ की मल्हार',thaat:'Kafi',timecat:'seasonal',time:'Rainy season',vadi:2,samvadi:5,uncertain:false,
+ char:"Attributed to Tansen, said to bring rain. Its cascading phrases evoke the monsoon — seasonal, exuberant, and deeply evocative. Both Ni forms used.",
+ aaroh:[d(0),d(2),m(5),v(7,[5,7]),d(10),d(9),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),d(7),m(5),d(3),m(2),ma(1,1.0),d(0)]},
+
+{name:'Miyan ki Todi',deva:'मियाँ की तोड़ी',thaat:'Todi',timecat:'morning',time:'Late morning',vadi:1,samvadi:5,uncertain:false,
+ char:'The standard form of Todi, one of the most emotionally intense raags. Multiple komal notes and tivra Ma create a dense, bittersweet harmonic world.',
+ aaroh:[d(0),ma(1,1.3),d(3),m(6),m(7),ma(8,1.2),d(11),d(12)],
+ avaroh:[d(12),d(11),d(8),m(7),m(6),v(3,[6,3]),ma(1,1.5),d(0)]},
+
+{name:'Multani',deva:'मुल्तानी',thaat:'Todi',timecat:'afternoon',time:'Late afternoon',vadi:1,samvadi:5,uncertain:false,
+ char:'An afternoon raag closely related to Todi but distinctly different in feel. Uses Pa (which Todi avoids in ascent). Serious, introspective, deeply meditative.',
+ aaroh:[d(0),ma(1,1.2),d(3),m(6),d(7),d(11),d(12)],
+ avaroh:[d(12),d(11),d(7),m(6),d(3),ma(1,1.4),d(0)]},
+
+{name:'Nand',deva:'नंद',thaat:'Kalyan',timecat:'night',time:'Night',vadi:7,samvadi:2,uncertain:false,
+ char:'A raag of the Kalyan family with a joyful, festive character. Uses both Ma forms and has a characteristic vakra movement around Pa.',
+ aaroh:[d(0),d(2),d(4),m(6),v(7,[6,7]),d(9),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),m(7),d(6),m(5),d(4),d(2),d(0)]},
+
+{name:'Nat Bhairav',deva:'नट भैरव',thaat:'Bhairav',timecat:'morning',time:'Morning',vadi:5,samvadi:2,uncertain:false,
+ char:'A combination of Nat and Bhairav. The shuddha Re of Nat contrasts with the komal Dha of Bhairav, creating an unusual, striking combination.',
+ aaroh:[d(0),d(2),d(4),m(5),m(7),ma(8,1.2),d(11),d(12)],
+ avaroh:[d(12),d(11),ma(8,1.2),m(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Nayaki Kanada',deva:'नायकी कानड़ा',thaat:'Asavari',timecat:'night',time:'Night',vadi:5,samvadi:2,uncertain:false,
+ char:'A feminine, delicate raag from the Kanada family. Less severe than Darbari, more gentle in its ornament treatment.',
+ aaroh:[d(0),d(2),m(5),m(7),v(3,[5,3]),m(5),m(7),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),m(7),v(3,[5,3]),m(5),m(2),d(0)]},
+
+{name:'Paraj',deva:'पराज',thaat:'Purvi',timecat:'night',time:'Night',vadi:8,samvadi:2,uncertain:true,
+ char:'A night raag of the Purvi family. Serious and contemplative, shares characteristics with Shree and Purvi.',
+ aaroh:[d(0),d(1),d(4),m(6),m(7),d(8),d(11),d(12)],
+ avaroh:[d(12),d(11),d(8),m(7),m(6),d(4),d(1),d(0)]},
+
+{name:'Patdeep',deva:'पटदीप',thaat:'Kafi',timecat:'evening',time:'Evening',vadi:5,samvadi:2,uncertain:false,
+ char:'An evening raag with a warm, intimate character. The use of komal Ni in ascent and both Ni forms creates a soft, lamp-lit quality.',
+ aaroh:[d(0),d(2),d(3),m(5),m(7),d(9),d(10),d(12)],
+ avaroh:[d(12),d(11),d(9),m(7),m(5),d(3),d(2),d(0)]},
+
+{name:'Pilu',deva:'पीलू',thaat:'Kafi',timecat:'evening',time:'Any time',vadi:5,samvadi:2,uncertain:false,
+ char:'A light, semi-classical raag used extensively in thumri, dadra, and ghazal. Its flexibility allows all twelve notes to appear in performance — supremely expressive.',
+ aaroh:[d(0),d(2),d(3),m(5),d(7),d(9),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),m(7),m(5),d(4),d(3),d(2),d(0)]},
+
+{name:'Puriya',deva:'पूरिया',thaat:'Marwa',timecat:'evening',time:'Late afternoon/Dusk',vadi:1,samvadi:5,uncertain:false,
+ char:'Related to Marwa but with Pancham present, Puriya has a slightly less austere quality while retaining the suspended, evening melancholy.',
+ aaroh:[d(0),ma(1,1.2),d(4),m(6),m(7),d(11),d(12)],
+ avaroh:[d(12),d(11),m(7),m(6),d(4),ma(1,1.3),d(0)]},
+
+{name:'Puriya Dhanashri',deva:'पूरिया धनाश्री',thaat:'Purvi',timecat:'evening',time:'Evening',vadi:6,samvadi:1,uncertain:false,
+ char:'One of the most beloved evening raags. A combination of Puriya and Dhanashri — the tivra Ma and komal Re create intense longing while the Dhanashri influence adds sweetness.',
+ aaroh:[d(0),ma(1,1.2),d(4),m(6),m(7),d(8),d(11),d(12)],
+ avaroh:[d(12),d(11),d(8),m(7),d(6),m(5),d(6),d(4),ma(1,1.4),d(0)]},
+
+{name:'Puriya Kalyan',deva:'पूरिया कल्याण',thaat:'Kalyan',timecat:'evening',time:'Evening',vadi:6,samvadi:2,uncertain:true,
+ char:'A combination of Puriya and Kalyan. The tivra Ma of Kalyan blends with the komal Re character of Puriya.',
+ aaroh:[d(0),d(1),d(4),m(6),d(7),d(11),d(12)],
+ avaroh:[d(12),d(11),d(7),m(6),d(4),d(1),d(0)]},
+
+{name:'Purvi',deva:'पूर्वी',thaat:'Purvi',timecat:'evening',time:'Dusk/Evening',vadi:8,samvadi:2,uncertain:false,
+ char:'The parent thaat raag of the Purvi family. Uses komal Re, komal Dha, and tivra Ma — a combination that creates an intense, twilight atmosphere full of longing.',
+ aaroh:[d(0),ma(1,1.2),d(4),m(6),m(7),ma(8,1.2),d(11),d(12)],
+ avaroh:[d(12),d(11),ma(8,1.2),m(7),m(6),d(4),ma(1,1.3),d(0)]},
+
+{name:'Rageshri',deva:'रागेश्री',thaat:'Khamaj',timecat:'night',time:'Night',vadi:5,samvadi:2,uncertain:false,
+ char:'A romantic, lyrical night raag. Its flowing phrases and use of both Ni forms create an atmosphere of tender longing. Popular in modern compositions.',
+ aaroh:[d(0),d(2),d(4),m(5),d(7),d(9),d(10),d(12)],
+ avaroh:[d(12),d(11),d(9),m(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Ramkali',deva:'रामकली',thaat:'Bhairav',timecat:'morning',time:'Morning',vadi:5,samvadi:2,uncertain:false,
+ char:'A serious morning raag with a grave, contemplative character. Uses both Ma forms and has both komal and shuddha Ni in different contexts.',
+ aaroh:[d(0),ma(1,1.2),d(4),m(5),d(6),m(7),d(10),d(12)],
+ avaroh:[d(12),d(11),d(10),d(7),d(6),m(5),d(4),ma(1,1.3),d(0)]},
+
+{name:'Shahana',deva:'शाहाना',thaat:'Khamaj',timecat:'night',time:'Night',vadi:5,samvadi:2,uncertain:false,
+ char:'A romantic, evocative night raag. Its characteristic vakra movements and both Ni forms give it a wandering, improvisatory feel.',
+ aaroh:[d(0),d(2),d(4),m(5),v(7,[5,7]),d(9),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),d(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Shankara',deva:'शंकरा',thaat:'Bilawal',timecat:'night',time:'Night',vadi:7,samvadi:2,uncertain:false,
+ char:'A majestic, devotional raag associated with Lord Shiva. Its pentatonic base with characteristic ornaments gives it a powerful, pure character.',
+ aaroh:[d(0),d(2),d(4),m(5),d(7),d(11),d(12)],
+ avaroh:[d(12),d(11),d(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Shivranjani',deva:'शिवरंजनी',thaat:'Kafi',timecat:'evening',time:'Any time',vadi:2,samvadi:5,uncertain:false,
+ char:'A beautiful pentatonic raag with universal appeal. Its five notes (Sa Re g Pa Dha) create a melancholic, searching quality that transcends time of day.',
+ aaroh:[d(0),d(2),d(3),d(7),d(9),d(12)],
+ avaroh:[d(12),d(9),d(7),d(3),d(2),d(0)]},
+
+{name:'Shree',deva:'श्री',thaat:'Purvi',timecat:'evening',time:'Late afternoon/Sandhiprakash',vadi:1,samvadi:7,uncertain:false,
+ char:'One of the most profound raags in Hindustani music, associated with the setting sun. Its use of Tivra Ma and Komal Re creates deep contemplation and yearning.',
+ aaroh:[d(0),ma(1,1.4),m(6),k(7,6),ma(11,1.2),d(12)],
+ avaroh:[d(12),ma(11,1.2),m(8),m(7),m(6),v(4,[6,4,6,4]),ma(1,1.5),d(0)]},
+
+{name:'Shuddha Kalyan',deva:'शुद्ध कल्याण',thaat:'Kalyan',timecat:'evening',time:'Evening',vadi:9,samvadi:3,uncertain:false,
+ char:'A pure form of Kalyan using only tivra Ma (no shuddha Ma). Bright, expansive, and joyful — the quintessential evening raag.',
+ aaroh:[d(0),d(2),d(4),m(6),d(7),d(9),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),d(7),m(6),d(4),d(2),d(0)]},
+
+{name:'Shuddha Sarang',deva:'शुद्ध सारंग',thaat:'Kafi',timecat:'afternoon',time:'Afternoon',vadi:2,samvadi:5,uncertain:false,
+ char:'A light, pure afternoon raag. Its use of both Ni forms in specific contexts gives it an unusual breadth for a Sarang.',
+ aaroh:[d(0),d(2),m(5),d(7),d(11),d(12)],
+ avaroh:[d(12),d(11),d(7),m(5),d(2),d(0)]},
+
+{name:'Shyam Kalyan',deva:'श्याम कल्याण',thaat:'Kalyan',timecat:'evening',time:'Evening',vadi:7,samvadi:3,uncertain:false,
+ char:'A variant of Kalyan using both Ma forms. The shuddha Ma in the opening creates a distinctive departure from pure Kalyan.',
+ aaroh:[d(0),d(2),d(4),m(5),d(6),m(7),d(9),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),m(7),d(6),m(5),d(4),d(2),d(0)]},
+
+{name:'Sindhura',deva:'सिंदूरा',thaat:'Khamaj',timecat:'evening',time:'Evening',vadi:5,samvadi:2,uncertain:true,
+ char:'A gentle, sweet evening raag with folk characteristics. Light and accessible.',
+ aaroh:[d(0),d(2),d(4),m(5),d(7),d(9),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),m(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Sohani',deva:'सोहनी',thaat:'Marwa',timecat:'night',time:'Night',vadi:6,samvadi:2,uncertain:false,
+ char:'A beautiful night raag of the Marwa family. Omits Sa and Pa in the basic structure. Its characteristic phrases create an atmosphere of refined longing.',
+ aaroh:[d(1),d(4),m(6),d(8),d(11),d(13)],
+ avaroh:[d(13),d(11),d(8),m(6),d(4),m(1),d(0)]},
+
+{name:'Sughrai',deva:'सुघराई',thaat:'Bilawal',timecat:'morning',time:'Morning',vadi:5,samvadi:2,uncertain:true,
+ char:'A morning raag with a clear, fresh character. Relatively rare in concert performance.',
+ aaroh:[d(0),d(2),d(4),m(5),d(7),d(9),d(12)],
+ avaroh:[d(12),d(9),d(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Suha',deva:'सूहा',thaat:'Kafi',timecat:'evening',time:'Evening',vadi:5,samvadi:2,uncertain:true,
+ char:'A gentle, lyrical evening raag. Sweet and accessible in character.',
+ aaroh:[d(0),d(2),d(3),m(5),d(7),d(9),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),m(7),m(5),d(3),d(2),d(0)]},
+
+{name:'Sur Malhar',deva:'सूर मल्हार',thaat:'Kafi',timecat:'seasonal',time:'Rainy season',vadi:2,samvadi:5,uncertain:true,
+ char:'A monsoon raag attributed to the Bhakti poet Sur Das. Devotional and evocative of rain.',
+ aaroh:[d(0),d(2),m(5),d(7),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),d(7),m(5),d(2),d(0)]},
+
+{name:'Tilak Kamod',deva:'तिलक कामोद',thaat:'Khamaj',timecat:'night',time:'Night',vadi:2,samvadi:5,uncertain:false,
+ char:'A romantic, lively night raag. A combination of Tilang and Kamod characteristics. Its characteristic phrases move with a certain playful restlessness.',
+ aaroh:[d(0),d(2),d(4),m(5),d(7),d(9),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),v(7,[9,7]),m(5),d(4),v(2,[4,2]),d(0)]},
+
+{name:'Tilang',deva:'तिलंग',thaat:'Khamaj',timecat:'night',time:'Night',vadi:7,samvadi:2,uncertain:false,
+ char:'A light, pleasant night raag with a folk quality. Uses only a few notes in ascent creating a simple, direct expression. Common in thumri.',
+ aaroh:[d(0),d(4),m(5),d(7),d(10),d(12)],
+ avaroh:[d(12),d(10),d(9),m(7),m(5),d(4),d(2),d(0)]},
+
+{name:'Yaman',deva:'यमन',thaat:'Kalyan',timecat:'evening',time:'Early night',vadi:9,samvadi:3,uncertain:false,
+ char:'One of the most beloved raags, built entirely on the Kalyan thaat with tivra Ma as its most distinctive feature. Romantic, expansive, and luminous.',
+ aaroh:[d(0),d(2),d(4),m(6),d(7),d(9),d(11),d(12)],
+ avaroh:[d(12),d(11),d(9),m(7),m(6),d(4),d(2),d(0)]},
+]; // end RAAGS
+// ════════════════════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════════════════════
+const CX=270,CY=260,R=190,RI=74,RM=132;
+let currentRaag   = RAAGS.find(r=>r.name==='Shree');
+let tonicOffset   = 11; // B default
+let showAaroh     = true;
+let showAvaroh    = true;
+let favorites     = new Set(JSON.parse(localStorage.getItem('re-favorites')||'[]'));
+let activeFilter  = 'all';
+let searchQ       = '';
+let activeSpoke   = -1;
+let audioCtx      = null;
+const BPM_STEPS   = [20,24,28,32,36,40,46,52,60,69,80,92,108,126,144,168,200];
+let bpmIdx        = 8; // 60 BPM
+let metronomeOn   = false;
+let metroIntervalId = null;
+let metroBeat     = 0;
+let loopOn        = false;
+let playState     = 'stopped'; // stopped|playing|paused
+let pendingTimeouts=[];
+let playbackStartedAt=0;
+let playbackOffsetSec=0;
+let allEvents     = [];
+let totalPlayDur  = 0;
+let freqTimeline  = [];
+let tracerCanvas, tracerCtx, tracerRAF=null;
+
+// ════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════════════════════════
+const getBPM      = () => BPM_STEPS[bpmIdx];
+const getBaseDur  = () => (60/getBPM())*0.52;
+const noteAngle   = s  => Math.PI + (((s%12)+12)%12)*2*Math.PI/12;
+const pt          = (a,r) => [CX+r*Math.cos(a), CY+r*Math.sin(a)];
+const westernLabel= s => WESTERN[(s+tonicOffset)%12];
+const getBaseFreq = () => 261.63*Math.pow(2,tonicOffset/12);
+const semiToFreq  = s => getBaseFreq()*Math.pow(2,s/12);
+const saveFavs    = () => localStorage.setItem('re-favorites',JSON.stringify([...favorites]));
+
+// ════════════════════════════════════════════════════════════════════════════
+// SIDEBAR / LIST
+// ════════════════════════════════════════════════════════════════════════════
+function renderList() {
+  let data = RAAGS;
+  if(activeFilter==='fav') data=data.filter(r=>favorites.has(r.name));
+  else if(['morning','afternoon','evening','night','seasonal'].includes(activeFilter))
+    data=data.filter(r=>r.timecat===activeFilter);
+  if(searchQ) {
+    const q=searchQ.toLowerCase();
+    data=data.filter(r=>r.name.toLowerCase().includes(q)||r.deva.includes(searchQ)||
+                        (r.thaat&&r.thaat.toLowerCase().includes(q)));
+  }
+  const el=document.getElementById('raag-list');
+  el.innerHTML=data.map(r=>`
+    <div class="raag-item${r.name===currentRaag.name?' active':''}" data-name="${r.name}">
+      <div class="raag-item-text">
+        <div class="raag-item-name">${r.name}${r.uncertain?'<span style="opacity:.4;font-size:9px;margin-left:3px">~</span>':''}</div>
+        <div class="raag-item-sub">${r.deva} · ${r.thaat}</div>
+      </div>
+      <button class="fav-btn${favorites.has(r.name)?' faved':''}" data-fav="${r.name}">★</button>
+    </div>`).join('');
+  el.querySelectorAll('.raag-item').forEach(el=>{
+    el.addEventListener('click',e=>{
+      if(e.target.closest('.fav-btn')) return;
+      selectRaag(RAAGS.find(r=>r.name===el.dataset.name));
+    });
+  });
+  el.querySelectorAll('.fav-btn').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const n=btn.dataset.fav;
+      favorites.has(n)?favorites.delete(n):favorites.add(n);
+      saveFavs(); renderList();
+    });
+  });
+}
+
+function selectRaag(raag) {
+  if(playState!=='stopped') stopPlayback();
+  currentRaag=raag;
+  renderList();
+  buildWheel();
+  updateInfo();
+  rebuildGhost();
+  // Reset analysis state for new raag (keep mic running)
+  lastInferredDir='none';
+  clearNextSpoke();
+  if(micActive) updateAnalysisUI();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// INFO PANEL
+// ════════════════════════════════════════════════════════════════════════════
+const ORN_SYMBOLS={meend:'⌇',vakra:'↗↘',kan:'ₖ',direct:'—',gamak:'≈'};
+const ORN_COLORS={meend:'var(--meend)',vakra:'var(--vakra)',kan:'var(--kan)',direct:'var(--muted)',gamak:'var(--gamak)'};
+
+function buildChain(seq, elId) {
+  const el=document.getElementById(elId); el.innerHTML='';
+  seq.forEach((step,i)=>{
+    if(i>0){
+      const c=document.createElement('div');
+      c.className=`conn ${step.ornament}`;
+      c.style.color=ORN_COLORS[step.ornament]||'var(--muted)';
+      c.textContent=ORN_SYMBOLS[step.ornament]||'—';
+      el.appendChild(c);
+    }
+    const chip=document.createElement('div');
+    chip.className='note-chip';
+    chip.id=`${elId}-chip-${i}`;
+    if(step.semi%12===currentRaag.vadi)    chip.classList.add('vadi');
+    if(step.semi%12===currentRaag.samvadi) chip.classList.add('samvadi');
+    const inner=document.createElement('div');
+    inner.className='chip-inner';
+    inner.textContent=SARGAM[step.semi%12]+(step.semi>=12?"'":"");
+    if(step.andolan){
+      const b=document.createElement('div');
+      b.className='orn-badge'; b.style.background='var(--andolan)'; inner.appendChild(b);
+    }
+    chip.appendChild(inner);
+    chip.title=(step.label||SARGAM[step.semi%12])+' — click to hear';
+    chip.style.cursor='pointer';
+    chip.addEventListener('click',()=>playReferenceTone(step.semi));
+    el.appendChild(chip);
+  });
+}
+
+function updateInfo() {
+  const r=currentRaag;
+  document.getElementById('raag-name-display').textContent=r.name+(r.uncertain?' ~':'');
+  document.getElementById('raag-deva-display').textContent=r.deva;
+  document.getElementById('raag-meta-display').textContent=`${r.thaat} · ${r.time}`;
+  const cn=document.getElementById('center-name');
+  cn.textContent=r.name; cn.setAttribute('font-size',r.name.length>9?'10':r.name.length>5?'12':'13');
+  document.getElementById('center-deva').textContent=r.deva;
+  document.getElementById('info-thaat-time').textContent=`${r.thaat} · ${r.time}`;
+  document.getElementById('info-char').textContent=r.char+(r.uncertain?' (Ornament details approximate — contributions welcome)':'');
+  document.getElementById('info-vs').innerHTML=
+    `<span class="orn-tag orn-meend">${SARGAM[r.vadi%12]} vadi</span> <span class="orn-tag" style="background:rgba(42,184,158,.2);color:var(--accent2)">${SARGAM[r.samvadi%12]} samvadi</span>`;
+  buildChain(r.aaroh,'chain-aaroh');
+  buildChain(r.avaroh,'chain-avaroh');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// WHEEL — SVG spokes, labels, halos, andolan marks
+// ════════════════════════════════════════════════════════════════════════════
+function buildSpokes() {
+  const g=document.getElementById('spokes'); g.innerHTML='';
+  const rn=new Set([...currentRaag.aaroh,...currentRaag.avaroh].map(s=>s.semi%12));
+  for(let i=0;i<12;i++){
+    const a=noteAngle(i);
+    const [x1,y1]=pt(a,RI),[x2,y2]=pt(a,R);
+    const ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+    ln.setAttribute('x1',x1);ln.setAttribute('y1',y1);
+    ln.setAttribute('x2',x2);ln.setAttribute('y2',y2);
+    ln.setAttribute('class',rn.has(i)?'spoke raag-note':'spoke');
+    ln.setAttribute('id','spoke-'+i);
+    g.appendChild(ln);
+  }
+}
+
+function buildLabels() {
+  const g=document.getElementById('labels'); g.innerHTML='';
+  for(let i=0;i<12;i++){
+    const a=noteAngle(i);
+    const [lx,ly]=pt(a,R+27),[sx,sy]=pt(a,R+42);
+    // Clickable group wrapping sargam + western labels
+    const grp=document.createElementNS('http://www.w3.org/2000/svg','g');
+    grp.setAttribute('style','cursor:pointer');
+    grp.setAttribute('title',SARGAM[i]+' — click to hear');
+    grp.addEventListener('click',()=>playReferenceTone(i));
+    // Invisible hit-target circle for easier clicking
+    const hit=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    hit.setAttribute('cx',lx);hit.setAttribute('cy',ly);hit.setAttribute('r','16');
+    hit.setAttribute('fill','transparent');grp.appendChild(hit);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',lx);t.setAttribute('y',ly);t.setAttribute('text-anchor','middle');
+    t.setAttribute('dominant-baseline','central');t.setAttribute('font-family',"'Cormorant Garamond',serif");
+    t.setAttribute('font-size','13');t.setAttribute('fill','#e8e6df');t.textContent=SARGAM[i];
+    grp.appendChild(t);
+    g.appendChild(grp);
+    const w=document.createElementNS('http://www.w3.org/2000/svg','text');
+    w.setAttribute('x',sx);w.setAttribute('y',sy);w.setAttribute('text-anchor','middle');
+    w.setAttribute('dominant-baseline','central');w.setAttribute('font-family',"'DM Mono',monospace");
+    w.setAttribute('font-size','10');w.setAttribute('fill','#7a7870');w.textContent=westernLabel(i);
+    grp.appendChild(w);
+    g.appendChild(grp);
+  }
+}
+
+function buildHalos() {
+  const g=document.getElementById('halos'); g.innerHTML='';
+  [[currentRaag.vadi,'#c4832a','V'],[currentRaag.samvadi,'#2ab89e','S']].forEach(([s,col,lbl])=>{
+    const a=noteAngle(s%12),[hx,hy]=pt(a,R+12);
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',hx);c.setAttribute('cy',hy);c.setAttribute('r','8');
+    c.setAttribute('fill',col);c.setAttribute('opacity','0.85');g.appendChild(c);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',hx);t.setAttribute('y',hy);t.setAttribute('text-anchor','middle');
+    t.setAttribute('dominant-baseline','central');t.setAttribute('font-size','8');
+    t.setAttribute('font-family','DM Mono,monospace');t.setAttribute('fill','#fff');t.setAttribute('font-weight','600');
+    t.textContent=lbl;g.appendChild(t);
+  });
+}
+
+function buildAndolanMarks() {
+  const g=document.getElementById('andolan-marks'); g.innerHTML='';
+  const an=new Set([...currentRaag.aaroh,...currentRaag.avaroh].filter(s=>s.andolan).map(s=>s.semi%12));
+  an.forEach(s=>{
+    const a=noteAngle(s),[mx,my]=pt(a,RM);
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',mx);c.setAttribute('cy',my);c.setAttribute('r','5');
+    c.setAttribute('fill','none');c.setAttribute('stroke','#e05c8a');
+    c.setAttribute('stroke-width','1');c.setAttribute('opacity','0.6');g.appendChild(c);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',mx);t.setAttribute('y',my);t.setAttribute('text-anchor','middle');
+    t.setAttribute('dominant-baseline','central');t.setAttribute('font-size','8');
+    t.setAttribute('fill','#e05c8a');t.setAttribute('font-family','serif');
+    t.textContent='~';g.appendChild(t);
+  });
+}
+
+function buildWheel() {
+  buildSpokes();buildLabels();buildHalos();buildAndolanMarks();
+}
+
+function clearNextSpoke(){
+  if(nextSpokeSemi>=0){
+    const el=document.getElementById('spoke-'+nextSpokeSemi);
+    if(el){
+      const rn=new Set([...currentRaag.aaroh,...currentRaag.avaroh].map(s=>s.semi%12));
+      el.setAttribute('class',rn.has(nextSpokeSemi)?'spoke raag-note':'spoke');
+    }
+    nextSpokeSemi=-1;
+  }
+}
+
+function setNextSpoke(semi){
+  // Don't overwrite current active spoke
+  if(semi<0||semi===activeSpoke) return;
+  clearNextSpoke();
+  nextSpokeSemi=semi%12;
+  const el=document.getElementById('spoke-'+nextSpokeSemi);
+  if(el) el.setAttribute('class','spoke next-note-spoke');
+}
+
+function highlightSpoke(semi) {
+  if(activeSpoke>=0){
+    const prev=document.getElementById('spoke-'+(activeSpoke%12));
+    const rn=new Set([...currentRaag.aaroh,...currentRaag.avaroh].map(s=>s.semi%12));
+    if(prev) prev.setAttribute('class',rn.has(activeSpoke%12)?'spoke raag-note':'spoke');
+  }
+  activeSpoke=semi%12;
+  // If the active spoke matches the next-note spoke, clear the next indicator
+  // (user has arrived — it will be refreshed on next analysis frame)
+  if(nextSpokeSemi>=0 && nextSpokeSemi===semi%12) clearNextSpoke();
+  const bar=document.getElementById('note-bar');
+  if(semi>=0){
+    const el=document.getElementById('spoke-'+(semi%12));
+    if(el) el.setAttribute('class','spoke active');
+    bar.textContent=SARGAM[semi%12]+' — '+SARGAM_FULL[semi%12]+' ('+westernLabel(semi%12)+')';
+    bar.classList.add('lit');
+  } else { bar.textContent=''; bar.classList.remove('lit'); }
+}
+
+function highlightChainNote(chainId,idx) {
+  document.querySelectorAll('#'+chainId+' .note-chip').forEach((ch,i)=>ch.classList.toggle('active',i===idx));
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// FREQUENCY TIMELINE
+// ════════════════════════════════════════════════════════════════════════════
+const TIMELINE_RES=240;
+const ORN_COLOR={meend:'#c4832a',vakra:'#9b6fd4',kan:'#7ac47a',andolan:'#e05c8a',gamak:'#4ab8d4',direct:'rgba(255,255,255,0.45)'};
+
+function buildFreqTimeline(events) {
+  const samples=[];
+  events.forEach(ev=>{
+    const step=ev.step,dur=ev.dur,semi=step.semi;
+    const prevSemi=ev.prevSemi!==null?ev.prevSemi:semi;
+    const orn=step.ornament;
+    const baseColor=ORN_COLOR[orn]||ORN_COLOR.direct;
+    const nS=Math.max(2,Math.round(dur*TIMELINE_RES));
+    for(let i=0;i<nS;i++){
+      const localT=i/TIMELINE_RES;
+      let semiF=semi,color=baseColor;
+      if(orn==='meend'){
+        const ge=Math.min(dur*0.45,0.28);
+        semiF=localT<ge?prevSemi+(semi-prevSemi)*(localT/ge):semi;
+      } else if(orn==='kan'){
+        const kanSemi=step.kan!==undefined?step.kan:semi-1;
+        semiF=localT<0.06?kanSemi+(semi-kanSemi)*(localT/0.06):semi;
+      } else if(orn==='vakra'){
+        const via=step.vakra_via||[];
+        const all=[prevSemi,...via,semi];
+        const sd=(dur*0.8)/(all.length-1);
+        const si=Math.min(Math.floor(localT/sd),all.length-2);
+        const sf=(localT-si*sd)/sd;
+        semiF=all[si]+(all[si+1]-all[si])*Math.min(sf,1);
+        color=ORN_COLOR.vakra;
+      } else { semiF=semi; }
+      if(step.andolan){
+        const depth=step.andolan_depth||0.3,rate=5.5;
+        const startT=orn==='meend'?Math.min(dur*0.5,0.3):0.08;
+        if(localT>=startT){ semiF+=depth*Math.sin((localT-startT)*rate*2*Math.PI); color=ORN_COLOR.andolan; }
+      }
+      if(step.gamak){
+        const gp=step.gamak_pair!==undefined?step.gamak_pair:semi-2;
+        if(localT>=0.08){ semiF=Math.floor((localT-0.08)*8)%2===0?semi:gp; color=ORN_COLOR.gamak; }
+      }
+      samples.push({t:ev.t+localT,semiF,color,isAaroh:ev.chainId==='chain-aaroh'});
+    }
+  });
+  samples.sort((a,b)=>a.t-b.t);
+  return samples;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// SPIRAL COORDINATE SYSTEM
+// ANGLE = pitch (semiF), RADIUS = time (tFrac outward/inward)
+// ════════════════════════════════════════════════════════════════════════════
+const R_INNER=74,R_MID=132,R_OUTER=190;
+
+function spiralToXY(semiF,tFrac,isAaroh){
+  const angle=Math.PI+(((semiF%12)+12)%12)*2*Math.PI/12;
+  const r=isAaroh?R_MID+tFrac*(R_OUTER-R_MID):R_MID-tFrac*(R_MID-R_INNER);
+  const svgEl=document.getElementById('wheel');
+  const sx=svgEl.clientWidth/540,sy=svgEl.clientHeight/520;
+  return [(CX+r*Math.cos(angle))*sx,(CY+r*Math.sin(angle))*sy];
+}
+
+let segmentMap=[];  // [{startIdx,endIdx,ev,tStart,tEnd}]
+
+function buildAndRenderTimeline(events) {
+  const ae=events.filter(e=>e.chainId==='chain-aaroh');
+  const ave=events.filter(e=>e.chainId==='chain-avaroh');
+  const adur=ae.reduce((s,e)=>s+e.dur,0), avdur=ave.reduce((s,e)=>s+e.dur,0);
+  const at0=ae.length?ae[0].t:0, avt0=ave.length?ave[0].t:0;
+  const raw=buildFreqTimeline(events);
+  freqTimeline=raw.map(s=>{
+    const tFrac=s.isAaroh?(adur>0?Math.max(0,Math.min(1,(s.t-at0)/adur)):0)
+                         :(avdur>0?Math.max(0,Math.min(1,(s.t-avt0)/avdur)):0);
+    return {...s,tFrac};
+  });
+  // Build segment index map: one entry per event, pointing to its sample range
+  segmentMap=[];
+  events.forEach(ev=>{
+    const tStart=ev.t, tEnd=ev.t+ev.dur;
+    let startIdx=freqTimeline.findIndex(s=>s.t>=tStart-0.001);
+    if(startIdx<0) startIdx=0;
+    let endIdx=freqTimeline.findIndex(s=>s.t>=tEnd-0.001);
+    if(endIdx<0) endIdx=freqTimeline.length-1;
+    segmentMap.push({startIdx,endIdx,ev,tStart,tEnd});
+  });
+  renderStaticPath();
+}
+
+function rebuildGhost() {
+  const {events}=buildSchedule();
+  buildAndRenderTimeline(events);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// CANVAS TRACER
+// ════════════════════════════════════════════════════════════════════════════
+// ── SEGMENT CLICK PLAYBACK ───────────────────────────────────────────────────
+function ptDistSq(ax,ay,bx,by){return (ax-bx)**2+(ay-by)**2;}
+function segDistSq(px,py,ax,ay,bx,by){
+  const dx=bx-ax,dy=by-ay,lenSq=dx*dx+dy*dy;
+  if(lenSq===0) return ptDistSq(px,py,ax,ay);
+  const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/lenSq));
+  return ptDistSq(px,py,ax+t*dx,ay+t*dy);
+}
+
+function hitTestSegment(cx,cy){
+  // Find which segment (event) was clicked by proximity to its path samples
+  const HIT_THRESH_SQ=400; // 20px²
+  let best=null,bestDist=Infinity;
+  segmentMap.forEach((seg,si)=>{
+    for(let i=seg.startIdx;i<Math.min(seg.endIdx,freqTimeline.length-1);i+=3){
+      const a=freqTimeline[i],b=freqTimeline[Math.min(i+3,seg.endIdx)];
+      const [ax,ay]=spiralToXY(a.semiF,a.tFrac,a.isAaroh);
+      const [bx,by]=spiralToXY(b.semiF,b.tFrac,b.isAaroh);
+      const d=segDistSq(cx,cy,ax,ay,bx,by);
+      if(d<bestDist){bestDist=d;best=si;}
+    }
+  });
+  return bestDist<HIT_THRESH_SQ?best:null;
+}
+
+async function playSegment(segIdx){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') await audioCtx.resume();
+  // Stop any current playback
+  if(playState!=='stopped') stopPlayback();
+  const seg=segmentMap[segIdx];
+  if(!seg) return;
+  const ev=seg.ev;
+  const bd=getBaseDur();
+  const dur=bd*(ev.step.dur_mult||1.0);
+  // Flash the segment bright
+  highlightSpoke(ev.step.semi);
+  highlightChainNote(ev.chainId,ev.chainIdx);
+  // Highlight path segment on canvas
+  drawSegmentHighlight(seg.startIdx,seg.endIdx);
+  // Play just this one note
+  scheduleNote(ev.step,ev.prevSemi,audioCtx.currentTime+0.03,bd,audioCtx);
+  // Clear highlight after note ends
+  setTimeout(()=>{
+    highlightSpoke(-1);
+    document.querySelectorAll('.note-chip').forEach(c=>c.classList.remove('active'));
+    renderStaticPath();
+  }, dur*1000+100);
+}
+
+// Draw segment highlight for click-to-play (single segment)
+// or for vocal tracking (range of segments up to current note)
+function drawSegmentHighlight(startIdx, endIdx){
+  if(!tracerCtx||!freqTimeline.length) return;
+  tracerCtx.clearRect(0,0,tracerCanvas.clientWidth,tracerCanvas.clientHeight);
+  drawSamplePath(freqTimeline,0.10,1.0,null);
+  const seg=freqTimeline.slice(startIdx,endIdx+1);
+  drawSamplePath(seg,1.0,3.0,null);
+  if(seg.length>0){
+    const [x,y]=spiralToXY(seg[0].semiF,seg[0].tFrac,seg[0].isAaroh);
+    tracerCtx.beginPath();tracerCtx.arc(x,y,8,0,2*Math.PI);
+    tracerCtx.fillStyle=seg[0].color;tracerCtx.globalAlpha=0.4;tracerCtx.fill();
+    tracerCtx.globalAlpha=1.0;
+  }
+}
+
+// Highlight all segments from the start of a direction up to (and including) segIdx.
+// Used by vocal analysis to show progress through the aaroh/avaroh.
+// Also overlays the mic history dots so both are visible simultaneously.
+function drawVocalProgress(segIdx, chainId){
+  if(!tracerCtx||!freqTimeline.length) return;
+  tracerCtx.clearRect(0,0,tracerCanvas.clientWidth,tracerCanvas.clientHeight);
+  // Full ghost path dim
+  drawSamplePath(freqTimeline,0.10,1.0,null);
+
+  // Collect all timeline samples belonging to segments 0..segIdx in this chain
+  const segsInChain = segmentMap.filter(s=>s.ev.chainId===chainId);
+  if(segsInChain.length===0) return;
+  const upTo = Math.min(segIdx, segsInChain.length-1);
+  const firstSampleIdx = segsInChain[0].startIdx;
+  const lastSampleIdx  = segsInChain[upTo].endIdx;
+
+  // Bright path from chain start up to current segment
+  const brightSamples = freqTimeline.slice(firstSampleIdx, lastSampleIdx+1);
+  drawSamplePath(brightSamples, 0.92, 2.8, null);
+
+  // Pulsing glow dot at the end of the current segment (where we are now)
+  if(lastSampleIdx < freqTimeline.length){
+    const s = freqTimeline[lastSampleIdx];
+    const [x,y]=spiralToXY(s.semiF,s.tFrac,s.isAaroh);
+    tracerCtx.beginPath();tracerCtx.arc(x,y,12,0,2*Math.PI);
+    tracerCtx.fillStyle=s.color;tracerCtx.globalAlpha=0.18;tracerCtx.fill();
+    tracerCtx.beginPath();tracerCtx.arc(x,y,6,0,2*Math.PI);
+    tracerCtx.fillStyle=s.color;tracerCtx.globalAlpha=1.0;tracerCtx.fill();
+    tracerCtx.beginPath();tracerCtx.arc(x,y,2.5,0,2*Math.PI);
+    tracerCtx.fillStyle='#fff';tracerCtx.globalAlpha=0.9;tracerCtx.fill();
+    tracerCtx.globalAlpha=1.0;
+  }
+
+  // Overlay mic history on top so both are visible
+  if(micActive && micHistory.length>0) drawMicHistory();
+}
+
+// Draw a bright green "next note" indicator on the spoke and spiral path
+// at the position of the next expected note after the current one.
+function drawNextNoteIndicator(nextSeg){
+  if(!nextSeg) return;
+  setNextSpoke(nextSeg.ev.step.semi);
+}
+
+function initCanvas(){
+  tracerCanvas=document.getElementById('tracer-canvas');
+  function resize(){
+    const wrap=tracerCanvas.parentElement,dpr=window.devicePixelRatio||1;
+    tracerCanvas.width=wrap.clientWidth*dpr;
+    tracerCanvas.height=wrap.clientHeight*dpr;
+    tracerCtx=tracerCanvas.getContext('2d');
+    tracerCtx.scale(dpr,dpr);
+    if(freqTimeline.length) renderStaticPath();
+  }
+  resize();
+  new ResizeObserver(resize).observe(tracerCanvas.parentElement);
+  tracerCtx=tracerCanvas.getContext('2d');
+
+  // Segment click handler
+  tracerCanvas.style.cursor='crosshair';
+  tracerCanvas.addEventListener('click',async e=>{
+    const rect=tracerCanvas.getBoundingClientRect();
+    const cx=e.clientX-rect.left,cy=e.clientY-rect.top;
+    const si=hitTestSegment(cx,cy);
+    if(si!==null) await playSegment(si);
+  });
+}
+
+function drawSamplePath(samples,alpha,lineWidth,upToIdx){
+  if(samples.length<2) return null;
+  const limit=upToIdx!==null?upToIdx:samples.length;
+  let lastPt=null,batchColor=null,batchPts=[];
+  function flush(){
+    if(batchPts.length<2){batchPts=[];return;}
+    tracerCtx.beginPath();
+    tracerCtx.moveTo(batchPts[0][0],batchPts[0][1]);
+    for(let k=1;k<batchPts.length;k++) tracerCtx.lineTo(batchPts[k][0],batchPts[k][1]);
+    tracerCtx.strokeStyle=batchColor;tracerCtx.globalAlpha=alpha;
+    tracerCtx.lineWidth=lineWidth;tracerCtx.lineCap='round';tracerCtx.lineJoin='round';
+    tracerCtx.stroke();
+    batchPts=[batchPts[batchPts.length-1]];
+  }
+  for(let i=0;i<limit&&i<samples.length;i++){
+    const s=samples[i],pt2=spiralToXY(s.semiF,s.tFrac,s.isAaroh);
+    if(s.color!==batchColor){flush();batchColor=s.color;}
+    batchPts.push(pt2);lastPt=pt2;
+  }
+  flush();tracerCtx.globalAlpha=1.0;return lastPt;
+}
+
+function renderStaticPath(){
+  if(!tracerCtx||!freqTimeline.length) return;
+  tracerCtx.clearRect(0,0,tracerCanvas.clientWidth,tracerCanvas.clientHeight);
+  drawSamplePath(freqTimeline,0.20,1.4,null);
+  [{s:freqTimeline[0],col:'#c4832a'},
+   {s:freqTimeline.find(s=>!s.isAaroh),col:'#9b6fd4'},
+   {s:freqTimeline[freqTimeline.length-1],col:'#2ab89e'}
+  ].filter(x=>x.s).forEach(({s,col})=>{
+    const [mx,my]=spiralToXY(s.semiF,s.tFrac,s.isAaroh);
+    tracerCtx.beginPath();tracerCtx.arc(mx,my,4,0,2*Math.PI);
+    tracerCtx.fillStyle=col;tracerCtx.globalAlpha=0.5;tracerCtx.fill();
+    tracerCtx.globalAlpha=1.0;
+  });
+}
+
+function getSampleIdxAtTime(t){
+  let lo=0,hi=freqTimeline.length-1;
+  while(lo<hi){const mid=(lo+hi)>>1;freqTimeline[mid].t<t?lo=mid+1:hi=mid;}
+  return Math.min(lo,freqTimeline.length-1);
+}
+
+function drawTracer(){
+  if(playState!=='playing'||!audioCtx) return;
+  const elapsed=audioCtx.currentTime-playbackStartedAt;
+  const clampedT=Math.max(0,Math.min(elapsed,totalPlayDur));
+  tracerCtx.clearRect(0,0,tracerCanvas.clientWidth,tracerCanvas.clientHeight);
+  drawSamplePath(freqTimeline,0.13,1.0,null);
+  const curIdx=getSampleIdxAtTime(clampedT);
+  const lastPt=drawSamplePath(freqTimeline,0.88,2.4,curIdx+1);
+  let dotPt=lastPt,dotColor=freqTimeline[curIdx]?freqTimeline[curIdx].color:'#c4832a';
+  if(curIdx>0&&curIdx<freqTimeline.length){
+    const a=freqTimeline[curIdx-1],b=freqTimeline[curIdx];
+    if(b.t>a.t){
+      const f=(clampedT-a.t)/(b.t-a.t);
+      dotPt=spiralToXY(a.semiF+(b.semiF-a.semiF)*f,a.tFrac+(b.tFrac-a.tFrac)*f,b.isAaroh);
+      dotColor=b.color;
+    }
+  }
+  if(dotPt){
+    const [x,y]=dotPt;
+    tracerCtx.beginPath();tracerCtx.arc(x,y,14,0,2*Math.PI);
+    tracerCtx.fillStyle=dotColor;tracerCtx.globalAlpha=0.10;tracerCtx.fill();
+    tracerCtx.beginPath();tracerCtx.arc(x,y,8,0,2*Math.PI);
+    tracerCtx.strokeStyle=dotColor;tracerCtx.globalAlpha=0.35;tracerCtx.lineWidth=1.5;tracerCtx.stroke();
+    tracerCtx.beginPath();tracerCtx.arc(x,y,5,0,2*Math.PI);
+    tracerCtx.fillStyle=dotColor;tracerCtx.globalAlpha=1.0;tracerCtx.fill();
+    tracerCtx.beginPath();tracerCtx.arc(x,y,2,0,2*Math.PI);
+    tracerCtx.fillStyle='#fff';tracerCtx.globalAlpha=0.85;tracerCtx.fill();
+    tracerCtx.globalAlpha=1.0;
+  }
+  // Overlay mic dot during playback if active
+  if(micActive&&micHistory.length>0) drawMicHistory();
+  tracerRAF=requestAnimationFrame(drawTracer);
+}
+
+function startTracer(events){buildAndRenderTimeline(events);if(tracerRAF)cancelAnimationFrame(tracerRAF);tracerRAF=requestAnimationFrame(drawTracer);}
+function stopTracer(){if(tracerRAF){cancelAnimationFrame(tracerRAF);tracerRAF=null;}if(freqTimeline.length)renderStaticPath();}
+
+// ════════════════════════════════════════════════════════════════════════════
+// AUDIO ENGINE
+// ════════════════════════════════════════════════════════════════════════════
+function scheduleNote(step,prevSemi,t,baseDur,ctx){
+  const semi=step.semi,freq=semiToFreq(semi),prevFreq=prevSemi!==null?semiToFreq(prevSemi):freq;
+  const dur=baseDur*(step.dur_mult||1.0);
+  const osc=ctx.createOscillator(),gain=ctx.createGain();
+  osc.type='triangle';osc.connect(gain);gain.connect(ctx.destination);
+  gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(0.28,t+0.025);
+  gain.gain.setValueAtTime(0.28,t+dur-0.07);gain.gain.linearRampToValueAtTime(0,t+dur);
+  const orn=step.ornament;
+  if(orn==='meend'){
+    const ge=t+Math.min(dur*0.45,0.28);
+    osc.frequency.setValueAtTime(prevFreq,t);osc.frequency.exponentialRampToValueAtTime(freq,ge);
+  } else if(orn==='kan'){
+    const kf=semiToFreq(step.kan);
+    osc.frequency.setValueAtTime(kf,t);osc.frequency.exponentialRampToValueAtTime(freq,t+0.06);
+  } else if(orn==='vakra'){
+    const via=step.vakra_via||[];const all=via.map(v2=>semiToFreq(v2)).concat([freq]);
+    const sd=(dur*0.8)/all.length;osc.frequency.setValueAtTime(prevFreq,t);
+    all.forEach((f,i)=>osc.frequency.exponentialRampToValueAtTime(f,t+0.05+(i+1)*sd));
+  } else { osc.frequency.setValueAtTime(freq,t); }
+  if(step.andolan){
+    const depth=step.andolan_depth||0.3,rate=5.5;
+    const st=t+(orn==='meend'?Math.min(dur*0.5,0.3):0.08);
+    const ns=Math.floor((dur-0.1)*rate);
+    for(let i=0;i<ns;i++) osc.frequency.setValueAtTime(semiToFreq(semi+depth*Math.sin(i*Math.PI)),st+i/rate);
+  }
+  if(step.gamak){
+    const gp=step.gamak_pair!==undefined?step.gamak_pair:semi-2,rate=8;
+    const ns2=Math.floor(dur*0.6*rate);
+    for(let i=0;i<ns2;i++) osc.frequency.setValueAtTime(semiToFreq(i%2===0?semi:gp),(t+0.08)+i/rate);
+  }
+  osc.start(t);osc.stop(t+dur);
+}
+
+function buildSchedule(){
+  const bd=getBaseDur(),pause=bd*1.35,events=[];
+  const ar=currentRaag.aaroh,av=currentRaag.avaroh;
+  let t=0;
+  ar.forEach((step,i)=>{
+    const dur=bd*(step.dur_mult||1.0);
+    events.push({step,prevSemi:i>0?ar[i-1].semi:null,t,dur,chainId:'chain-aaroh',chainIdx:i,label:SARGAM[step.semi%12]});
+    t+=dur;
+  });
+  t+=pause;
+  av.forEach((step,i)=>{
+    const dur=bd*(step.dur_mult||1.0);
+    events.push({step,prevSemi:i>0?av[i-1].semi:null,t,dur,chainId:'chain-avaroh',chainIdx:i,label:SARGAM[step.semi%12]});
+    t+=dur;
+  });
+  return {events,totalDur:t};
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// TRANSPORT
+// ════════════════════════════════════════════════════════════════════════════
+function updateBpmDisplay(){document.getElementById('bpm-display').textContent=BPM_STEPS[bpmIdx];}
+
+function changeBpm(delta){
+  bpmIdx=Math.max(0,Math.min(BPM_STEPS.length-1,bpmIdx+delta));
+  updateBpmDisplay();
+  if(playState!=='playing'){const{events}=buildSchedule();buildAndRenderTimeline(events);return;}
+  const elapsedSec=audioCtx.currentTime-playbackStartedAt;
+  const progressFrac=Math.max(0,Math.min(0.9999,elapsedSec/totalPlayDur));
+  clearPending();
+  const{events:ne,totalDur:nt}=buildSchedule();
+  allEvents=ne;totalPlayDur=nt;
+  const newOff=progressFrac*nt;
+  playbackStartedAt=audioCtx.currentTime-newOff;
+  const sf=audioCtx.currentTime+0.04;
+  ne.forEach(ev=>{
+    if(ev.t+ev.dur<newOff-0.05) return;
+    const at=playbackStartedAt+ev.t;
+    if(at<sf) return;
+    scheduleNote(ev.step,ev.prevSemi,at,getBaseDur(),audioCtx);
+  });
+  ne.forEach(ev=>{
+    if(ev.t<newOff-0.05) return;
+    const rd=(ev.t-newOff)*1000;
+    if(rd<0) return;
+    const orn=ev.step.ornament;
+    const oc={meend:'var(--meend)',vakra:'var(--vakra)',kan:'var(--kan)',andolan:'var(--andolan)',gamak:'var(--gamak)',direct:'var(--muted)'}[orn]||'var(--muted)';
+    const tid=setTimeout(()=>{
+      highlightSpoke(ev.step.semi);highlightChainNote(ev.chainId,ev.chainIdx);
+      const ll=document.createElement('div');
+      ll.innerHTML='<span style="color:'+oc+'">'+orn.padEnd(8)+'</span>  '+ev.label;
+      const lg=document.getElementById('playlog');lg.appendChild(ll);lg.scrollTop=lg.scrollHeight;
+    },rd);
+    pendingTimeouts.push(tid);
+  });
+  const et=setTimeout(()=>stopPlayback(true),(nt-newOff+0.3)*1000);
+  pendingTimeouts.push(et);
+  startTracer(ne);
+  if(metronomeOn) startMetronome();
+}
+
+function startMetronome(){
+  if(metroIntervalId) clearInterval(metroIntervalId);
+  metroBeat=0;
+  const beatMs=(60/getBPM())*1000;
+  const dot=document.getElementById('metro-dot');
+  function tick(){
+    const ib=metroBeat%4===0;
+    if(audioCtx){
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.type='sine';o.frequency.value=ib?1200:900;
+      g.gain.setValueAtTime(ib?0.18:0.1,audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.04);
+      o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+0.05);
+    }
+    dot.classList.add(ib?'beat':'offbeat');
+    setTimeout(()=>dot.classList.remove('beat','offbeat'),80);
+    metroBeat++;
+  }
+  tick();metroIntervalId=setInterval(tick,beatMs);
+}
+
+function stopMetronome(){if(metroIntervalId){clearInterval(metroIntervalId);metroIntervalId=null;}document.getElementById('metro-dot').classList.remove('beat','offbeat');}
+function toggleMetronome(){
+  metronomeOn=!metronomeOn;
+  document.getElementById('btn-metro').classList.toggle('on',metronomeOn);
+  if(metronomeOn){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();startMetronome();}
+  else stopMetronome();
+}
+
+function clearPending(){pendingTimeouts.forEach(id=>clearTimeout(id));pendingTimeouts=[];}
+function updatePlayBtn(){
+  const btn=document.getElementById('play-btn');
+  if(playState==='stopped'){btn.textContent='▶ Play';btn.classList.remove('paused');}
+  else if(playState==='playing'){btn.textContent='⏸ Pause';btn.classList.remove('paused');}
+  else{btn.textContent='▶ Resume';btn.classList.add('paused');}
+}
+
+function stopPlayback(andLoop){
+  clearPending();playState='stopped';playbackOffsetSec=0;
+  highlightSpoke(-1);document.querySelectorAll('.note-chip').forEach(c=>c.classList.remove('active'));
+  updatePlayBtn();if(metronomeOn)stopMetronome();stopTracer();
+  if(andLoop&&loopOn) setTimeout(()=>handlePlayPause(),400);
+}
+
+function startPlayback(){
+  const{events,totalDur}=buildSchedule();
+  allEvents=events;totalPlayDur=totalDur;
+  document.getElementById('playlog').innerHTML='';
+  playState='playing';updatePlayBtn();
+  if(metronomeOn) startMetronome();
+  startTracer(events);
+  const offset=playbackOffsetSec,now=audioCtx.currentTime+0.05;
+  playbackStartedAt=now-offset;
+  events.forEach(ev=>{
+    if(ev.t<offset-0.05) return;
+    const rd=(ev.t-offset)*1000;if(rd<0) return;
+    scheduleNote(ev.step,ev.prevSemi,playbackStartedAt+ev.t,getBaseDur(),audioCtx);
+    const orn=ev.step.ornament;
+    const oc={meend:'var(--meend)',vakra:'var(--vakra)',kan:'var(--kan)',andolan:'var(--andolan)',gamak:'var(--gamak)',direct:'var(--muted)'}[orn]||'var(--muted)';
+    const tid=setTimeout(()=>{
+      highlightSpoke(ev.step.semi);highlightChainNote(ev.chainId,ev.chainIdx);
+      const ll=document.createElement('div');
+      ll.innerHTML='<span style="color:'+oc+'">'+orn.padEnd(8)+'</span>  '+ev.label;
+      const lg=document.getElementById('playlog');lg.appendChild(ll);lg.scrollTop=lg.scrollHeight;
+    },rd);
+    pendingTimeouts.push(tid);
+  });
+  const et=setTimeout(()=>stopPlayback(true),(totalDur-offset+0.3)*1000);
+  pendingTimeouts.push(et);
+}
+
+async function handlePlayPause(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') await audioCtx.resume();
+  if(playState==='stopped'){playbackOffsetSec=0;startPlayback();}
+  else if(playState==='playing'){
+    playbackOffsetSec=audioCtx.currentTime-playbackStartedAt;
+    clearPending();playState='paused';updatePlayBtn();if(metronomeOn)stopMetronome();
+  } else { startPlayback(); }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// MIC PITCH DETECTION
+// getUserMedia → AnalyserNode → YIN-style autocorrelation → semiF → dot on ring
+// The mic dot travels along R_MID (the divider ring), angle = detected pitch
+// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════════════
+// MIC PITCH HISTORY ENGINE
+// Collects pitch readings into a 20-second circular buffer.
+// Each sample: {angle, time} — angle is octave-folded, time is performance.now()
+// Canvas renders all samples as dots on R_MID, opacity = age (newest=1, oldest=0)
+// ════════════════════════════════════════════════════════════════════════════
+let micStream=null, micAnalyser=null, micRAF=null, micActive=false;
+let micSemiF=-1; // for label display only
+
+const MIC_HISTORY_MS = 20000;      // 20 second window
+const MIC_SAMPLE_INTERVAL_MS = 60; // ~16 samples/sec, max ~320 over 20s window
+let micHistory = [];               // [{angle, t}] — t = performance.now()
+let micLastSampleT = 0;
+
+async function populateMicList(){
+  try{
+    const devices=await navigator.mediaDevices.enumerateDevices();
+    const mics=devices.filter(d=>d.kind==='audioinput');
+    const sel=document.getElementById('mic-select');
+    sel.innerHTML=mics.map((d,i)=>`<option value="${d.deviceId}">${d.label||'Mic '+(i+1)}</option>`).join('');
+    sel.style.display=mics.length>1?'inline-block':'none';
+  } catch(e){}
+}
+
+// Pitch detection optimised for human voice (tenor–soprano: ~80–700 Hz)
+// Uses normalised autocorrelation (NSDF-style) to suppress octave errors,
+// followed by a 5-sample median filter to eliminate single-frame outliers.
+const MIC_FREQ_MIN = 70;   // Hz — below typical bass voice
+const MIC_FREQ_MAX = 700;  // Hz — above typical soprano
+let pitchHistory = [];     // last N raw freq readings for median filter
+
+function detectPitch(buffer, sampleRate){
+  const SIZE = buffer.length;
+  const HALF = Math.floor(SIZE / 2);
+
+  // RMS gate — human voice needs more energy than breath/room noise
+  let rms = 0;
+  for(let i = 0; i < SIZE; i++) rms += buffer[i] * buffer[i];
+  rms = Math.sqrt(rms / SIZE);
+  if(rms < 0.035) return -1;  // raised from 0.012 — ignore quiet sounds
+
+  // Normalised autocorrelation (NSDF):
+  // r[lag] = sum(x[i]*x[i+lag]) / sqrt(sum(x[i]²) * sum(x[i+lag]²))
+  // Normalisation suppresses octave peaks relative to the fundamental.
+  const minP = Math.floor(sampleRate / MIC_FREQ_MAX);
+  const maxP = Math.floor(sampleRate / MIC_FREQ_MIN);
+
+  // Compute raw autocorrelation and self-energies
+  const corr  = new Float32Array(maxP + 1);
+  const normL = new Float32Array(maxP + 1); // energy of left window
+  const normR = new Float32Array(maxP + 1); // energy of right window
+  let eL = 0, eR = 0;
+  // Initialise lag-0 energies
+  for(let i = 0; i < HALF; i++) { eL += buffer[i]*buffer[i]; eR += buffer[i]*buffer[i]; }
+  normL[0] = eL; normR[0] = eR;
+  // Rolling energy update + cross-correlation
+  for(let lag = 0; lag <= maxP; lag++){
+    if(lag > 0){
+      eL -= buffer[lag-1]*buffer[lag-1];
+      eL += buffer[lag+HALF-1]*buffer[lag+HALF-1];
+      eR -= buffer[lag-1]*buffer[lag-1];
+      eR += buffer[lag+HALF-1]*buffer[lag+HALF-1];
+      normL[lag] = eL; normR[lag] = eR;
+    }
+    let s = 0;
+    for(let i = 0; i < HALF; i++) s += buffer[i] * buffer[i + lag];
+    corr[lag] = s;
+  }
+  // Normalise
+  const nsdf = new Float32Array(maxP + 1);
+  for(let lag = minP; lag <= maxP; lag++){
+    const denom = Math.sqrt(normL[lag] * normR[lag]);
+    nsdf[lag] = denom > 1e-8 ? corr[lag] / denom : 0;
+  }
+
+  // Find all peaks in nsdf above threshold, pick the first strong one
+  // (first = lowest period = highest freq = true fundamental, not overtone)
+  const THRESHOLD = 0.35; // must be at least 35% of max normalised correlation
+  let maxNsdf = 0;
+  for(let i = minP; i <= maxP; i++) if(nsdf[i] > maxNsdf) maxNsdf = nsdf[i];
+  if(maxNsdf < THRESHOLD) return -1;
+
+  // Find first peak above threshold*maxNsdf (prefer short periods = fundamentals)
+  let best = -1;
+  let inPeak = false;
+  let peakStart = minP;
+  for(let i = minP; i <= maxP; i++){
+    if(!inPeak && nsdf[i] > THRESHOLD * maxNsdf){ inPeak = true; peakStart = i; }
+    if(inPeak){
+      if(best < 0 || nsdf[i] > nsdf[best]) best = i;
+      // End of this peak
+      if(i === maxP || nsdf[i+1] < THRESHOLD * maxNsdf){
+        break; // take the first peak — it's the fundamental
+      }
+    }
+  }
+  if(best < 0) return -1;
+
+  // Parabolic interpolation for sub-sample accuracy
+  const y0 = nsdf[Math.max(minP, best-1)];
+  const y1 = nsdf[best];
+  const y2 = nsdf[Math.min(maxP, best+1)];
+  const refined = best - (y2 - y0) / (2*(2*y1 - y2 - y0) || 1);
+  const freq = sampleRate / refined;
+  if(freq < MIC_FREQ_MIN || freq > MIC_FREQ_MAX) return -1;
+
+  // Median filter over last 5 readings — eliminates single-frame octave jumps
+  pitchHistory.push(freq);
+  if(pitchHistory.length > 5) pitchHistory.shift();
+  const sorted = [...pitchHistory].sort((a,b) => a-b);
+  return sorted[Math.floor(sorted.length / 2)];
+}
+
+// Octave-fold: collapse any octave to [0,12) on the chromatic wheel
+function freqToFolded(freq){
+  if(freq<=0) return null;
+  const baseFreq=261.63*Math.pow(2,tonicOffset/12);
+  const rawSemi=12*Math.log2(freq/baseFreq);
+  const folded=((rawSemi%12)+12)%12;
+  const nearestInt=Math.round(folded)%12;
+  const cents=Math.round((folded-nearestInt)*100);
+  return {folded, nearestInt, cents};
+}
+
+// Draw all mic history dots on the canvas
+// Each dot at R_MID, angle=pitch, opacity=1-(age/20s)
+// Color spectrum: newest=hot white/yellow, mid=pink/magenta, old=deep purple→invisible
+// age 0.0 → hsl(55,100%,95%)  bright warm white-yellow
+// age 0.15→ hsl(20,100%,70%)  orange
+// age 0.35→ hsl(330,90%,55%)  hot pink
+// age 0.6 → hsl(280,70%,35%)  deep purple
+// age 1.0 → hsl(260,50%,15%)  near-black (already faded out by opacity)
+function drawMicHistory(){
+  if(!tracerCtx) return;
+  const now=performance.now();
+  // GC: shift expired samples off the front (O(1), no allocation)
+  while(micHistory.length>0 && now-micHistory[0].t >= MIC_HISTORY_MS) micHistory.shift();
+  if(micHistory.length===0) return;
+
+  const svgEl=document.getElementById('wheel');
+  const sx=svgEl.clientWidth/540, sy=svgEl.clientHeight/520;
+
+  // Three perceptually distinct zones:
+  //   CURRENT  age 0 – 1.5s  : large bright dot with glow
+  //   RECENT   age 1.5–6s    : medium, fading quickly
+  //   HISTORY  age 6–20s     : tiny dim speck, barely visible
+  //
+  // Size:  logarithmic — log(1 + age*30) gives steep early drop
+  // Lum:   piecewise — current zone stays bright, then drops sharply into history
+  const ZONE_CURRENT = 1500;   // ms
+  const ZONE_RECENT  = 6000;   // ms
+
+  for(let i=0;i<micHistory.length;i++){
+    const s=micHistory[i];
+    const ageMs = now - s.t;
+    const age   = ageMs / MIC_HISTORY_MS; // 0–1
+
+    // Logarithmic radius: 7px at age=0, ~1px at age=0.3, ~0.7px at age=1
+    const radius = Math.max(0.7, 7 * (1 - Math.log(1 + age*40) / Math.log(41)));
+
+    // Piecewise luminosity
+    let L;
+    if(ageMs < ZONE_CURRENT){
+      // Current: 80% → 55% over 1.5s (still clearly bright)
+      const t = ageMs / ZONE_CURRENT;
+      L = 80 - 25*t;
+    } else if(ageMs < ZONE_RECENT){
+      // Recent: 55% → 18% over 4.5s (clearly dimming)
+      const t = (ageMs - ZONE_CURRENT) / (ZONE_RECENT - ZONE_CURRENT);
+      L = 55 - 37*(t*t);  // quadratic — fast early drop
+    } else {
+      // History: 18% → 5% over 14s
+      const t = (ageMs - ZONE_RECENT) / (MIC_HISTORY_MS - ZONE_RECENT);
+      L = 18 - 13*t;
+    }
+    L = Math.max(5, L);
+
+    const color = `hsl(330,85%,${L.toFixed(1)}%)`;
+    const mx = (CX + R_MID * Math.cos(s.angle)) * sx;
+    const my = (CY + R_MID * Math.sin(s.angle)) * sy;
+
+    // Glow halo only in the current zone
+    if(ageMs < ZONE_CURRENT){
+      const glowAlpha = 0.22 * (1 - ageMs/ZONE_CURRENT);
+      tracerCtx.beginPath();
+      tracerCtx.arc(mx,my,radius+6,0,2*Math.PI);
+      tracerCtx.fillStyle=color;
+      tracerCtx.globalAlpha=glowAlpha;
+      tracerCtx.fill();
+    }
+
+    tracerCtx.beginPath();
+    tracerCtx.arc(mx,my,radius,0,2*Math.PI);
+    tracerCtx.fillStyle=color;
+    tracerCtx.globalAlpha=1.0;
+    tracerCtx.fill();
+  }
+
+  // White pip on newest dot only
+  const newest = micHistory[micHistory.length-1];
+  if(newest){
+    const mx=(CX+R_MID*Math.cos(newest.angle))*sx;
+    const my=(CY+R_MID*Math.sin(newest.angle))*sy;
+    tracerCtx.beginPath();
+    tracerCtx.arc(mx,my,2.5,0,2*Math.PI);
+    tracerCtx.fillStyle='#ffffff';
+    tracerCtx.globalAlpha=1.0;
+    tracerCtx.fill();
+  }
+  tracerCtx.globalAlpha=1.0;
+}
+
+
+function drawMicDot(){
+  if(!micActive||!micAnalyser) return;
+  const now=performance.now();
+  const buf=new Float32Array(micAnalyser.fftSize);
+  micAnalyser.getFloatTimeDomainData(buf);
+  const freq=detectPitch(buf,audioCtx.sampleRate);
+  const result=freq>0?freqToFolded(freq):null;
+
+  if(result && now-micLastSampleT >= MIC_SAMPLE_INTERVAL_MS){
+    const angle=Math.PI+result.folded*2*Math.PI/12;
+    micHistory.push({angle,t:now});
+    micLastSampleT=now;
+    micSemiF=result.folded;
+    const lbl=document.getElementById('mic-label');
+    const centsStr=result.cents!==0?(result.cents>0?'+':'')+result.cents+'¢':'';
+    lbl.textContent=SARGAM[result.nearestInt%12]+centsStr;
+    lbl.style.color='var(--accent2)';
+  } else if(!result){
+    const lbl=document.getElementById('mic-label');
+    lbl.textContent='—';
+    lbl.style.color='var(--muted)';
+  }
+
+  // Redraw canvas
+  if(playState!=='playing'){
+    if(freqTimeline.length) renderStaticPath();
+    else tracerCtx.clearRect(0,0,tracerCanvas.clientWidth,tracerCanvas.clientHeight);
+    drawMicHistory();
+  }
+  micRAF=requestAnimationFrame(drawMicDot);
+}
+
+async function toggleMic(){
+  const btn=document.getElementById('btn-mic');
+  if(micActive){
+    micActive=false;
+    if(micRAF){cancelAnimationFrame(micRAF);micRAF=null;}
+    if(micStream) micStream.getTracks().forEach(t=>t.stop());
+    micStream=null;micAnalyser=null;micSemiF=-1;
+    micHistory=[];micLastSampleT=0;pitchHistory=[];
+    clearNextSpoke();
+    stopAnalysis();
+    btn.classList.remove('active');
+    document.getElementById('mic-label').textContent='';
+    if(freqTimeline.length) renderStaticPath();
+    else tracerCtx.clearRect(0,0,tracerCanvas.clientWidth,tracerCanvas.clientHeight);
+    return;
+  }
+  try{
+    if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') await audioCtx.resume();
+    await populateMicList();
+    const sel=document.getElementById('mic-select');
+    const deviceId=sel.value||undefined;
+    micStream=await navigator.mediaDevices.getUserMedia({
+      audio:{deviceId,echoCancellation:false,noiseSuppression:false,autoGainControl:false}
+    });
+    const src=audioCtx.createMediaStreamSource(micStream);
+    micAnalyser=audioCtx.createAnalyser();
+    micAnalyser.fftSize=8192;           // ~186ms window at 44100Hz
+    micAnalyser.smoothingTimeConstant=0.4;
+    src.connect(micAnalyser);
+    micHistory=[];micLastSampleT=0;pitchHistory=[];
+    micActive=true;
+    btn.classList.add('active');
+    await populateMicList();
+    micRAF=requestAnimationFrame(drawMicDot);
+    startAnalysis();
+  } catch(err){
+    console.error('Mic error:',err);
+    document.getElementById('mic-label').textContent='No access';
+    document.getElementById('mic-label').style.color='var(--muted)';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// VOCAL DIRECTION INFERENCE & RAAG CORRECTNESS
+//
+// Direction: linear regression on recent mic angles over last 3s.
+//   Clockwise = ascending pitches (on our wheel) → Aaroh
+//   Counter-clockwise → Avaroh
+//   Use circular regression: convert angles to unit vectors, sum, check trend.
+//
+// Correctness: for each recent sample, find nearest semitone (mod 12),
+//   check if it belongs to the inferred direction's note set.
+//   Score = fraction of last N samples that hit raag notes.
+// ════════════════════════════════════════════════════════════════════════════
+
+const ANALYSIS_WINDOW_MS = 3000;   // look back 3s for direction
+const SCORE_WINDOW_MS    = 5000;   // look back 5s for accuracy score
+let lastInferredDir = 'none';      // 'aaroh'|'avaroh'|'none'
+let analysisRAF = null;
+let showVocalPath = true;
+let nextSpokeSemi = -1;  // semitone of the current next-note spoke   // toggle: highlight the sung path on the spiral
+let showNextNote  = true;   // toggle: show the next expected note indicator
+
+// Build note sets for current raag
+function getRaagNoteSets(){
+  const r = currentRaag;
+  const aarohNotes  = new Set(r.aaroh.map(s  => s.semi % 12));
+  const avarohNotes = new Set(r.avaroh.map(s => s.semi % 12));
+  const allNotes    = new Set([...aarohNotes, ...avarohNotes]);
+  return { aarohNotes, avarohNotes, allNotes };
+}
+
+// Infer direction from recent pitch history using circular angular velocity.
+// We compute the average signed angular step between consecutive samples.
+// Positive (clockwise on our wheel) → ascending pitch → Aaroh.
+function inferDirection(history, now){
+  const cutoff = now - ANALYSIS_WINDOW_MS;
+  const recent = history.filter(s => s.t >= cutoff);
+  if(recent.length < 4) return { dir:'none', confidence:0 };
+
+  // Sum signed angular deltas between consecutive samples
+  let totalDelta = 0, count = 0;
+  for(let i = 1; i < recent.length; i++){
+    let delta = recent[i].angle - recent[i-1].angle;
+    // Wrap to [-π, π] — shortest angular path
+    while(delta >  Math.PI) delta -= 2*Math.PI;
+    while(delta < -Math.PI) delta += 2*Math.PI;
+    totalDelta += delta;
+    count++;
+  }
+  const avgDelta = totalDelta / count; // radians per step
+
+  // Convert to degrees/sec for readability
+  const stepMs  = ANALYSIS_WINDOW_MS / recent.length;
+  const degPerSec = (avgDelta * 180 / Math.PI) / (stepMs / 1000);
+
+  // Threshold: ignore tiny movements (likely holding a note)
+  const THRESH = 8; // degrees/sec
+  if(Math.abs(degPerSec) < THRESH) return { dir:lastInferredDir, confidence:0, holding:true };
+
+  const dir = degPerSec > 0 ? 'aaroh' : 'avaroh';
+  // Confidence: how consistently was the direction maintained?
+  let sameDir = 0;
+  for(let i = 1; i < recent.length; i++){
+    let d = recent[i].angle - recent[i-1].angle;
+    while(d >  Math.PI) d -= 2*Math.PI;
+    while(d < -Math.PI) d += 2*Math.PI;
+    if((dir==='aaroh' && d>0) || (dir==='avaroh' && d<0)) sameDir++;
+  }
+  const confidence = sameDir / count;
+  return { dir, confidence, degPerSec };
+}
+
+// Score recent samples against the raag's note set for the inferred direction
+function scoreAccuracy(history, now, dir){
+  const { aarohNotes, avarohNotes, allNotes } = getRaagNoteSets();
+  const permitted = dir==='aaroh' ? aarohNotes : dir==='avaroh' ? avarohNotes : allNotes;
+  const cutoff = now - SCORE_WINDOW_MS;
+  const recent = history.filter(s => s.t >= cutoff);
+  if(recent.length === 0) return { score:0, samples:[] };
+
+  // Convert each sample's angle back to folded semitone
+  // angle = π/2 + folded*2π/12  →  folded = (angle - π/2) * 12 / (2π)
+  const samples = recent.map(s => {
+    let folded = (s.angle - Math.PI) * 12 / (2*Math.PI);
+    folded = ((folded % 12) + 12) % 12;
+    const nearest = Math.round(folded) % 12;
+    const deviation = Math.abs(folded - nearest); // 0=perfect, 0.5=halfway between
+    // Is this note in the permitted set?
+    const inSet = permitted.has(nearest);
+    // Passing tone: within 0.4 semitones of a permitted note but nearest isn't
+    const passing = !inSet && [...permitted].some(n => {
+      let d = Math.abs(folded - n); if(d>6) d=12-d; return d<0.45;
+    });
+    return { nearest, deviation, inSet, passing, folded };
+  });
+
+  const correct = samples.filter(s => s.inSet && s.deviation < 0.45).length;
+  const passing = samples.filter(s => s.passing).length;
+  const score   = (correct + passing*0.5) / samples.length;
+  return { score, samples };
+}
+
+function updateAnalysisUI(){
+  if(!micActive || micHistory.length < 3){
+    document.getElementById('pitch-panel').style.display='none';
+    return;
+  }
+  document.getElementById('pitch-panel').style.display='';
+  // Clear previous next-note indicator before redrawing
+  document.querySelectorAll('.note-chip.next-note').forEach(c=>c.classList.remove('next-note'));
+  const now = performance.now();
+  const { dir, confidence, holding } = inferDirection(micHistory, now);
+  lastInferredDir = dir;
+
+  // Direction badge
+  const badge = document.getElementById('dir-badge');
+  const conf  = document.getElementById('dir-confidence');
+  badge.className = `dir-badge ${dir}`;
+  badge.textContent = dir==='aaroh'?'↑ Aaroh':dir==='avaroh'?'↓ Avaroh':'— Holding';
+  conf.textContent  = confidence>0 ? `${Math.round(confidence*100)}% consistent`
+                    : holding ? 'sustaining note' : '';
+
+  // Accuracy score
+  const { score, samples } = scoreAccuracy(micHistory, now, dir);
+  const pct = Math.round(score * 100);
+  const bar  = document.getElementById('score-bar');
+  const lbl  = document.getElementById('score-pct');
+  bar.style.width = pct + '%';
+  bar.style.background = pct>=75?'#2ab89e':pct>=45?'#c4832a':'#e05c5c';
+  lbl.textContent = dir==='none' ? '—' : pct + '%';
+  lbl.style.color = pct>=75?'var(--accent2)':pct>=45?'var(--accent)':'#e05c5c';
+
+  // Per-note chips — show last 12 unique nearest semitones from recent history
+  const nc = document.getElementById('note-correctness');
+  const shown = samples.slice(-16);
+  nc.innerHTML = '';
+  shown.forEach(s => {
+    const cls = s.inSet && s.deviation<0.45 ? 'nc-correct'
+              : s.passing                   ? 'nc-passing'
+              :                               'nc-wrong';
+    const span = document.createElement('span');
+    span.className=`nc-chip ${cls}`;
+    span.textContent=SARGAM[s.nearest];
+    span.style.cursor='pointer';
+    span.title=SARGAM[s.nearest]+' — click to hear';
+    span.addEventListener('click',()=>playReferenceTone(s.nearest));
+    nc.appendChild(span);
+  });
+
+  // Draw correctness arcs on the wheel canvas
+  drawCorrectnessArcs(samples, dir);
+
+  // Highlight vocal progress on the spiral path
+  // Only when not playing back (playback has its own tracer)
+  if(playState==='stopped' && dir!=='none' && segmentMap.length>0){
+    const chainId = dir==='aaroh' ? 'chain-aaroh' : 'chain-avaroh';
+    const segsInChain = segmentMap.filter(s=>s.ev.chainId===chainId);
+    if(segsInChain.length>0 && samples.length>0){
+      // Current sung semitone — use the most recent reliable sample
+      const recentSample = samples[samples.length-1];
+      const sungSemi = recentSample.nearest;
+
+      // Find the furthest segment in this chain whose note matches or is
+      // closest to the currently sung semitone, scanning forward through the sequence.
+      // Logic: find the segment whose target semi is nearest to sungSemi,
+      // biased toward later segments (to show progress, not regress).
+      let bestSegIdx = 0;
+      let bestDist   = Infinity;
+      segsInChain.forEach((seg, i)=>{
+        const segSemi = seg.ev.step.semi % 12;
+        let dist = Math.abs(sungSemi - segSemi);
+        if(dist > 6) dist = 12 - dist; // wrap
+        // Prefer later matches slightly (progress bias)
+        const biasedDist = dist - i*0.05;
+        if(biasedDist < bestDist){
+          bestDist   = biasedDist;
+          bestSegIdx = i;
+        }
+      });
+
+      // Only highlight up to this point; don't highlight if no reasonable match
+      if(bestDist < 2.5){
+        if(showVocalPath) drawVocalProgress(bestSegIdx, chainId);
+        // Highlight current spoke and chain chip
+        highlightSpoke(segsInChain[bestSegIdx].ev.step.semi);
+        highlightChainNote(chainId, segsInChain[bestSegIdx].ev.chainIdx);
+
+        // Next note indicator
+        const nextSegInChain = segsInChain[bestSegIdx + 1] || null;
+        if(nextSegInChain && showNextNote){
+          drawNextNoteIndicator(nextSegInChain);
+          const nextChipId = `${chainId}-chip-${nextSegInChain.ev.chainIdx}`;
+          const nextChip = document.getElementById(nextChipId);
+          if(nextChip) nextChip.classList.add('next-note');
+        }
+      }
+    }
+  }
+}
+
+// Draw coloured arc segments on the outermost ring showing correctness by spoke
+function drawCorrectnessArcs(samples, dir){
+  if(!tracerCtx || samples.length===0) return;
+  const svgEl=document.getElementById('wheel');
+  const sx=svgEl.clientWidth/540, sy=svgEl.clientHeight/520;
+  const R_ARC = R_OUTER + 4; // just outside the outer ring
+
+  // Aggregate samples by nearest semitone
+  const bySemi = new Array(12).fill(null).map(()=>({correct:0,wrong:0,passing:0}));
+  samples.forEach(s=>{
+    const b = bySemi[s.nearest % 12];
+    if(s.inSet && s.deviation<0.45) b.correct++;
+    else if(s.passing) b.passing++;
+    else b.wrong++;
+  });
+
+  // Draw a small arc for each semitone that was visited
+  for(let semi=0;semi<12;semi++){
+    const b = bySemi[semi];
+    const total = b.correct+b.wrong+b.passing;
+    if(total===0) continue;
+    const color = b.correct>=b.wrong ? (b.correct>0?'#2ab89e':'#c4832a') : '#e05c5c';
+    const alpha = Math.min(0.9, 0.3 + (total/samples.length)*0.7);
+    const centerAngle = Math.PI + semi*2*Math.PI/12;
+    const halfArc = (2*Math.PI/12)*0.35; // 35% of a semitone slot width
+    tracerCtx.beginPath();
+    tracerCtx.arc(CX*sx, CY*sy, R_ARC*sx, centerAngle-halfArc, centerAngle+halfArc);
+    tracerCtx.strokeStyle=color;
+    tracerCtx.lineWidth=3;
+    tracerCtx.globalAlpha=alpha;
+    tracerCtx.stroke();
+    tracerCtx.globalAlpha=1.0;
+  }
+}
+
+function startAnalysis(){
+  function tick(){
+    updateAnalysisUI();
+    analysisRAF=requestAnimationFrame(tick);
+  }
+  if(analysisRAF) cancelAnimationFrame(analysisRAF);
+  analysisRAF=requestAnimationFrame(tick);
+}
+
+function stopAnalysis(){
+  if(analysisRAF){cancelAnimationFrame(analysisRAF);analysisRAF=null;}
+  document.getElementById('pitch-panel').style.display='none';
+  document.getElementById('note-correctness').innerHTML='';
+  // Clear arcs from canvas
+  if(freqTimeline.length) renderStaticPath();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// REFERENCE TONE — play a single sustained note when user clicks a pitch name
+// ════════════════════════════════════════════════════════════════════════════
+let refOsc=null, refGain=null;
+
+function stopReferenceTone(){
+  if(refGain){
+    try{
+      refGain.gain.setValueAtTime(refGain.gain.value, audioCtx.currentTime);
+      refGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime+0.12);
+    } catch(e){}
+  }
+  setTimeout(()=>{
+    try{if(refOsc){refOsc.stop();refOsc.disconnect();refOsc=null;}}catch(e){}
+    try{if(refGain){refGain.disconnect();refGain=null;}}catch(e){}
+  },150);
+}
+
+async function playReferenceTone(semi){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') await audioCtx.resume();
+
+  // Stop any currently playing reference tone
+  stopReferenceTone();
+
+  const freq=semiToFreq(semi%12) * (semi>=12?2:1);
+  const now=audioCtx.currentTime;
+
+  refOsc  = audioCtx.createOscillator();
+  refGain = audioCtx.createGain();
+  refOsc.type='triangle';
+  refOsc.frequency.value=freq;
+  refGain.gain.setValueAtTime(0,now);
+  refGain.gain.linearRampToValueAtTime(0.30,now+0.03);
+  // Hold for 1.2s then fade
+  refGain.gain.setValueAtTime(0.30,now+1.2);
+  refGain.gain.linearRampToValueAtTime(0,now+1.5);
+  refOsc.connect(refGain);refGain.connect(audioCtx.destination);
+  refOsc.start(now);
+  refOsc.stop(now+1.6);
+
+  // Highlight the spoke briefly
+  highlightSpoke(semi);
+  setTimeout(()=>{ if(activeSpoke===semi%12) highlightSpoke(-1); }, 1400);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// EVENT WIRING
+// ════════════════════════════════════════════════════════════════════════════
+document.getElementById('tonic-sel').addEventListener('change',e=>{
+  tonicOffset=parseInt(e.target.value);buildLabels();
+  const{events}=buildSchedule();buildAndRenderTimeline(events);
+});
+document.getElementById('btn-aaroh').addEventListener('click',function(){showAaroh=!showAaroh;this.classList.toggle('on-a',showAaroh);});
+document.getElementById('btn-avaroh').addEventListener('click',function(){showAvaroh=!showAvaroh;this.classList.toggle('on-v',showAvaroh);});
+document.getElementById('play-btn').addEventListener('click',handlePlayPause);
+document.getElementById('btn-faster').addEventListener('click',()=>changeBpm(+1));
+document.getElementById('btn-slower').addEventListener('click',()=>changeBpm(-1));
+document.getElementById('btn-metro').addEventListener('click',toggleMetronome);
+document.getElementById('btn-loop').addEventListener('click',function(){loopOn=!loopOn;this.classList.toggle('on',loopOn);});
+document.getElementById('btn-vocal-path').addEventListener('click',function(){showVocalPath=!showVocalPath;this.classList.toggle('on',showVocalPath);});
+document.getElementById('btn-next-note').addEventListener('click',function(){showNextNote=!showNextNote;this.classList.toggle('on',showNextNote);});
+document.getElementById('btn-mic').addEventListener('click',toggleMic);
+document.getElementById('mic-select').addEventListener('change',()=>{if(micActive){toggleMic();setTimeout(toggleMic,200);}});
+document.getElementById('search-input').addEventListener('input',e=>{searchQ=e.target.value;renderList();});
+document.querySelectorAll('.ftab').forEach(btn=>btn.addEventListener('click',function(){
+  document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));
+  this.classList.add('active');activeFilter=this.dataset.f;renderList();
+}));
+
+document.addEventListener('keydown',async e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  if(e.key===' '||e.code==='Space'){e.preventDefault();await handlePlayPause();}
+  else if(e.key==='ArrowUp'){e.preventDefault();changeBpm(+1);}
+  else if(e.key==='ArrowDown'){e.preventDefault();changeBpm(-1);}
+  else if(e.key==='l'||e.key==='L'){loopOn=!loopOn;document.getElementById('btn-loop').classList.toggle('on',loopOn);}
+  else if(e.key==='m'||e.key==='M') toggleMetronome();
+  else if(e.key==='r'||e.key==='R') toggleMic();
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════════════════
+updateBpmDisplay();
+initCanvas();
+document.getElementById('btn-vocal-path').classList.add('on');
+document.getElementById('btn-next-note').classList.add('on');
+renderList();
+buildWheel();
+updateInfo();
+rebuildGhost();
+</script>
+</body>
+</html>
