@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Pure JavaScript Tanpura</title>
+<style>
+body {
+    background: #111;
+    color: #eee;
+    font-family: sans-serif;
+    padding: 30px;
+}
+
+button {
+    font-size: 18px;
+    padding: 12px 24px;
+    margin-right: 10px;
+}
+</style>
+</head>
+<body>
+
+<h1>Tanpura Drone — C3</h1>
+
+<button id="start">Start</button>
+<button id="stop">Stop</button>
+
+<script>
+
+const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioContextClass();
+
+let masterGain;
+let running = false;
+let intervals = [];
+
+function midiToFrequency(midiNote) {
+  return 440 * Math.pow(2, (midiNote - 69) / 12);
+}
+
+// Example:
+console.log(midiToFrequency(60)); // Middle C ≈ 261.6255653005986
+
+
+// ------------------------------------------------------------
+// TANPURA TUNING
+// ------------------------------------------------------------
+
+const STRINGS = [
+    midiToFrequency(48), // C3
+    midiToFrequency(60), // C4
+    midiToFrequency(60), // C4
+    midiToFrequency(55)  // G3
+];
+
+// ------------------------------------------------------------
+// PARAMETERS
+// ------------------------------------------------------------
+
+const MASTER_GAIN = 0.05;
+const NUM_HARMONICS = 256;
+const PERIOD = 2.0;
+
+// ------------------------------------------------------------
+// CREATE TANPURA STRING
+// ------------------------------------------------------------
+
+function pluckString(freq, timeOffset = 0) {
+
+    const now = audioCtx.currentTime + timeOffset;
+
+    const output = audioCtx.createGain();
+    output.connect(masterGain);
+
+    // Slight stereo width
+    const panner = audioCtx.createStereoPanner();
+    panner.pan.value = (Math.random() * 2 - 1) * 0.4;
+    panner.connect(output);
+
+    // Harmonic cloud
+    for (let n = 1; n <= NUM_HARMONICS; n++) {
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        // Small detune for beating
+        const detune = (Math.random() - 0.5) * 3;
+
+        osc.type = 'sine';
+        osc.frequency.value = freq * n;
+        osc.detune.value = detune;
+
+        // Harmonic amplitude rolloff
+        const harmonicGain =
+            (1 / Math.pow(n, 1.15)) *
+            Math.exp(-n / 18);
+
+        // ADSR-like envelope
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(harmonicGain, now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(
+            harmonicGain * 0.7,
+            now + 1.0
+        );
+        gain.gain.exponentialRampToValueAtTime(
+            0.00001,
+            now + (4*PERIOD)
+        );
+
+        osc.connect(gain);
+        gain.connect(panner);
+
+        osc.start(now);
+        osc.stop(now + (4*PERIOD) + 0.1);
+    }
+
+    // Jawari-like buzz/noise layer
+    const noiseBuffer = audioCtx.createBuffer(
+        1,
+        audioCtx.sampleRate * (4*PERIOD),
+        audioCtx.sampleRate
+    );
+
+    const data = noiseBuffer.getChannelData(0);
+
+    for (let i = 0; i < data.length; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.02;
+    }
+
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = noiseBuffer;
+
+    const noiseFilter = audioCtx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.value = freq * 3;
+    noiseFilter.Q.value = 1;
+
+    const noiseGain = audioCtx.createGain();
+
+    noiseGain.gain.setValueAtTime(0.002, now);
+    noiseGain.gain.exponentialRampToValueAtTime(
+        0.00001,
+        now + PERIOD
+    );
+
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(panner);
+
+    noise.start(now);
+    noise.stop(now + PERIOD);
+}
+
+// ------------------------------------------------------------
+// PLAY LOOP
+// ------------------------------------------------------------
+
+function startTanpura() {
+
+    if (running) return;
+
+    running = true;
+
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = MASTER_GAIN;
+
+    // Gentle lowpass smoothing
+    const lowpass = audioCtx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 4500;
+
+    // Mild resonance
+    const resonance = audioCtx.createBiquadFilter();
+    resonance.type = 'peaking';
+    resonance.frequency.value = 300;
+    resonance.Q.value = 1;
+    resonance.gain.value = 3;
+
+    masterGain.connect(lowpass);
+    lowpass.connect(resonance);
+    resonance.connect(audioCtx.destination);
+
+    // Traditional pluck order
+    // C3 → C4 → C4 → G3
+
+    const spacing = PERIOD / STRINGS.length;
+
+    function cycle() {
+
+        pluckString(STRINGS[0], 0.0);
+        pluckString(STRINGS[1], spacing * 1);
+        pluckString(STRINGS[2], spacing * 2);
+        pluckString(STRINGS[3], spacing * 3);
+    }
+
+    cycle();
+
+    const id = setInterval(cycle, PERIOD * 1000);
+    intervals.push(id);
+}
+
+// ------------------------------------------------------------
+// STOP
+// ------------------------------------------------------------
+
+function stopTanpura() {
+
+    running = false;
+
+    intervals.forEach(clearInterval);
+    intervals = [];
+
+    if (masterGain) {
+        masterGain.gain.exponentialRampToValueAtTime(
+            0.00001,
+            audioCtx.currentTime + 1
+        );
+    }
+}
+
+// ------------------------------------------------------------
+// UI
+// ------------------------------------------------------------
+
+document.getElementById('start').onclick = async () => {
+    await audioCtx.resume();
+    startTanpura();
+};
+
+document.getElementById('stop').onclick = () => {
+    stopTanpura();
+};
+// Source - https://stackoverflow.com/a/61511955
+// Posted by Yong Wang, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-05-14, License - CC BY-SA 4.0
+
+function waitForElm(selector) {
+    return new Promise(resolve => {
+        if (document.querySelector(selector)) {
+            return resolve(document.querySelector(selector));
+        }
+
+        const observer = new MutationObserver(mutations => {
+            if (document.querySelector(selector)) {
+                observer.disconnect();
+                resolve(document.querySelector(selector));
+            }
+        });
+
+        // If you get "parameter 1 is not of type 'Node'" error, see https://stackoverflow.com/a/77855838/492336
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    });
+}
+// Source - https://stackoverflow.com/a/61511955
+// Posted by Yong Wang, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-05-14, License - CC BY-SA 4.0
+
+waitForElm('#start').then((elm) => {
+    console.log('Element is ready');
+    console.log(elm.textContent);
+    elm.click();
+});
+
+</script>
+</body>
+</html>
